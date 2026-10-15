@@ -68,7 +68,11 @@ function greeting(h) { return h < 5 ? "Gute Nacht" : h < 11 ? "Guten Morgen" : h
 let lastDay = "";
 function tick() {
   const now = new Date();
-  $("clock").innerHTML = pad(now.getHours()) + ":" + pad(now.getMinutes()) + '<span class="secring">' + ring(now.getSeconds() / 60 * 100, 54, pad(now.getSeconds()), "sec") + "</span>";
+  const hm = pad(now.getHours()) + ":" + pad(now.getMinutes());
+  if (!$("clockHM")) $("clock").innerHTML = '<span id="clockHM"></span><span class="secring">' + ring(0, 54, "00", "sec") + "</span>";
+  if ($("clockHM").textContent !== hm) $("clockHM").textContent = hm;
+  const sr = $("clock").querySelector(".rv"), sTxt = $("clock").querySelector("text");
+  sr.setAttribute("stroke-dasharray", (now.getSeconds() / 60 * 100).toFixed(2) + " 100"); sTxt.textContent = pad(now.getSeconds());
   $("date").textContent = WD_LONG[now.getDay()] + ", " + now.getDate() + ". " + MON[now.getMonth()] + " " + now.getFullYear();
   $("greet").textContent = greeting(now.getHours()) + (DATA ? ", " + DATA.name : "");
   const st = dayStatus(now);
@@ -412,8 +416,9 @@ async function init() {
   renderTasks(); tick(); renderTimer();
   loadWeather(); loadCalendar();
   if (typeof initFeatures === "function") initFeatures();
-  setInterval(tick, 1000);
-  setInterval(renderTimer, 1000);
+  setInterval(() => { if (!document.hidden) tick(); }, 1000);
+  setInterval(() => { if (timer) renderTimer(); }, 1000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { tick(); renderTimer(); } });
   setInterval(loadWeather, 30 * 60000);
   setInterval(loadCalendar, 10 * 60000);
   $("footInfo").textContent = "Cockpit · Stand " + fmtD(new Date());

@@ -3,7 +3,7 @@
 
 const TABS = {
   heute:  [["termine", "countdowns"], ["aufgaben", "notiz"], ["spotify", "wetter"]],
-  schule: [["countdowns", "ausbildung"], ["lernplan", "noten"], ["timer"]],
+  schule: [["countdowns", "ausbildung"], ["lernplan", "noten"], ["spotify", "timer"]],
   privat: [["sparziele"], ["serien", "mac"], ["spotify", "notiz"]]
 };
 let ALL = null; // urspruengliche Anordnung fuer "Alle"

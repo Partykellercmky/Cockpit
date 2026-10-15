@@ -380,7 +380,7 @@ $("spBig").onclick = () => {
   $("spDialog").showModal();
   loadSpotify(true); showPlaylists();
   clearInterval(bigTick);
-  bigTick = setInterval(() => { bigProgress(); }, 500);
+  bigTick = setInterval(() => { bigProgress(); }, 1000);
 };
 
 /* ---------- Mac-Nutzung (ActivityWatch ueber Supabase) ---------- */
@@ -463,9 +463,16 @@ function setupGrow() {
 function initFeatures() {
   setupGrow();
   renderPlan(); renderGrades(); loadSeries(); loadSpotify(true); loadMacStats();
+  // beim Zurueckkehren in die App einmal alles Wichtige auffrischen
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { loadMacStats(); } });
   setInterval(loadMacStats, 5 * 60000);
-  setInterval(() => loadSpotify(false), 5000);
-  setInterval(() => { if ($("spDialog").open) loadSpotify(true); }, 2500);
+  // Spotify sparsam abfragen: nur wenn Cockpit sichtbar ist, und seltener wenn nichts laeuft
+  const spLoop = async () => {
+    if (!document.hidden) await loadSpotify(true).catch(() => {});
+    const playing = window.spCur && window.spCur.is_playing;
+    setTimeout(spLoop, document.hidden ? 60000 : $("spDialog").open ? 3000 : playing ? 10000 : 30000);
+  };
+  setTimeout(spLoop, 10000);
   setInterval(loadSeries, 3 * 3600000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) loadSpotify(true); });
 }
