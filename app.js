@@ -113,12 +113,14 @@ async function loadWeather() {
   $("wxPlace").textContent = o.name;
   const url = "https://api.open-meteo.com/v1/forecast?latitude=" + o.lat + "&longitude=" + o.lon +
     "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m" +
+    "&hourly=temperature_2m,precipitation,precipitation_probability,snowfall,weather_code,visibility,wind_gusts_10m" +
     "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Europe%2FBerlin&forecast_days=5";
   try {
     const r = await fetch(url); if (!r.ok) throw 0;
     const w = await r.json(), c = w.current, d = w.daily;
     $("wxnow").textContent = Math.round(c.temperature_2m) + " °C, " + (WMO[c.weather_code] || "--") +
       " · gefühlt " + Math.round(c.apparent_temperature) + " °C · Wind " + Math.round(c.wind_speed_10m) + " km/h";
+    renderDrive(w.hourly);
     const box = $("wxdays"); box.textContent = "";
     d.time.forEach((t, i) => {
       const dt = new Date(t + "T12:00"), rain = d.precipitation_probability_max[i] ?? 0;
@@ -132,6 +134,44 @@ async function loadWeather() {
       box.append(el);
     });
   } catch { $("wxnow").textContent = "Wetter gerade nicht verfügbar"; }
+}
+
+/* ---------- Fahrt-Hinweise ---------- */
+// Naechste Fahrt: Mo-Do 06:15 zur Arbeit / 15:00 zurueck, Fr 07:00 zur Schule / 16:00 zurueck
+function nextTrip(now) {
+  for (let i = 0; i < 8; i++) {
+    const day = new Date(sod(now).getTime() + i * DAY), wd = day.getDay();
+    if (wd === 0 || wd === 6 || holidays(day.getFullYear())[ymd(day)]) continue;
+    const fr = wd === 5;
+    const trips = fr ? [[7, 0, 60, "zur Schule"], [16, 0, 60, "nach Hause"]] : [[6, 15, 45, "zur Arbeit"], [15, 0, 45, "nach Hause"]];
+    for (const [h, m, len, what] of trips) {
+      const t = new Date(day); t.setHours(h, m, 0, 0);
+      if (t.getTime() + len * 60000 > now.getTime()) return { t, len, what };
+    }
+  }
+  return null;
+}
+function renderDrive(hr) {
+  const el = $("drive"), trip = nextTrip(new Date());
+  if (!trip || !hr) { el.textContent = ""; return; }
+  const from = trip.t.getTime() - 3600000, to = trip.t.getTime() + trip.len * 60000;
+  const idx = hr.time.map((t, i) => [new Date(t).getTime(), i]).filter(([t]) => t >= from && t <= to).map(([, i]) => i);
+  if (!idx.length) { el.textContent = ""; return; }
+  const v = k => idx.map(i => hr[k][i] ?? 0);
+  const tMin = Math.min(...v("temperature_2m")), rain = Math.max(...v("precipitation")), prob = Math.max(...v("precipitation_probability")),
+    snow = Math.max(...v("snowfall")), vis = Math.min(...idx.map(i => hr.visibility[i] ?? 99999)), gust = Math.max(...v("wind_gusts_10m"));
+  const notes = [];
+  if (snow > 0) notes.push("Schnee, mehr Zeit einplanen");
+  else if (tMin <= 1 && (rain > 0 || prob >= 50)) notes.push("Glätte möglich");
+  if (tMin <= 0) notes.push("Frost, Scheiben kratzen");
+  else if (tMin <= 3 && !notes.length) notes.push("kalt, Scheiben evtl. beschlagen");
+  if (vis < 1000) notes.push("Nebel");
+  if (gust >= 60) notes.push("Sturmböen bis " + Math.round(gust) + " km/h");
+  if (!snow && prob >= 60 && tMin > 1) notes.push("Regen");
+  const today = ymd(trip.t) === ymd(new Date()), tomorrow = daysUntil(trip.t) === 1;
+  const when = (today ? "heute" : tomorrow ? "morgen" : WD_LONG[trip.t.getDay()]) + " " + pad(trip.t.getHours()) + ":" + pad(trip.t.getMinutes());
+  el.textContent = "Fahrt " + trip.what + " " + when + " · " + Math.round(tMin) + " °C · " + (notes.length ? notes.join(", ") : "freie Fahrt");
+  el.classList.toggle("warn", notes.length > 0);
 }
 
 /* ---------- Kalender ---------- */
@@ -191,6 +231,14 @@ $("taskForm").onsubmit = ev => {
   tasks.push({ id: Date.now(), text: v, done: false }); $("taskInput").value = ""; saveTasks();
 };
 $("clearDone").onclick = () => { tasks = tasks.filter(t => !t.done); saveTasks(); };
+
+/* ---------- Schnellnotiz ---------- */
+let noteTimer = null;
+$("note").value = store.get("note", "");
+$("note").addEventListener("input", () => {
+  clearTimeout(noteTimer);
+  noteTimer = setTimeout(() => { store.set("note", $("note").value); $("noteHint").textContent = "gespeichert"; setTimeout(() => $("noteHint").textContent = "", 1500); }, 400);
+});
 
 /* ---------- Lern-Timer ---------- */
 let timer = store.get("timer", null); // {endAt, len, subject, startedAt, brk, pausedLeft}
@@ -286,7 +334,7 @@ $("saveSet").onclick = () => {
 $("openSettings").onclick = () => { $("calKey").value = store.get("calKey", ""); $("settings").showModal(); };
 $("saveSettings").onclick = () => { store.set("calKey", $("calKey").value.trim()); loadCalendar(); };
 $("exportBtn").onclick = () => {
-  const blob = new Blob([JSON.stringify({ tasks, sessions, saved, calKey: store.get("calKey", "") }, null, 2)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify({ tasks, sessions, saved, note: store.get("note", ""), calKey: store.get("calKey", "") }, null, 2)], { type: "application/json" });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "cockpit-sicherung-" + ymd(new Date()) + ".json"; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 };
@@ -296,6 +344,7 @@ $("importFile").onchange = async ev => {
     const d = JSON.parse(await f.text());
     if (Array.isArray(d.tasks)) { tasks = d.tasks; store.set("tasks", tasks); }
     if (Array.isArray(d.sessions)) { sessions = d.sessions; store.set("sessions", sessions); }
+    if (typeof d.note === "string") { store.set("note", d.note); $("note").value = d.note; }
     if (typeof d.saved === "number") { saved = d.saved; store.set("saved", saved); }
     if (typeof d.calKey === "string") store.set("calKey", d.calKey);
     renderTasks(); renderStats(); renderSaving(); loadCalendar();

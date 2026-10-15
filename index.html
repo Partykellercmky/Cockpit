@@ -25,6 +25,7 @@
     <div class="headside">
       <p class="status" id="status">--</p>
       <p class="wxnow" id="wxnow">Wetter wird geladen</p>
+      <p class="drive" id="drive"></p>
     </div>
   </header>
 
@@ -61,6 +62,11 @@
           <input id="taskInput" type="text" placeholder="Neue Aufgabe" autocomplete="off" aria-label="Neue Aufgabe">
           <button class="btn" type="submit">Hinzufügen</button>
         </form>
+      </section>
+
+      <section class="card">
+        <h2>Schnellnotiz <span class="hint" id="noteHint"></span></h2>
+        <textarea id="note" rows="6" placeholder="Gedanken, Nummern, Ideen ..." aria-label="Schnellnotiz"></textarea>
       </section>
     </div>
 

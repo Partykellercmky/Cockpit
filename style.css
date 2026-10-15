@@ -31,6 +31,8 @@ button,input,select{font:inherit;color:inherit}
 .status{font-family:var(--mono);font-size:.82rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
 .status.free{color:var(--ok)}
 .wxnow{color:var(--text);font-size:1.05rem}
+.drive{color:var(--muted);font-size:.86rem}
+.drive.warn{color:var(--warn)}
 
 /* Raster */
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:start}
@@ -88,7 +90,8 @@ button,input,select{font:inherit;color:inherit}
 
 .addrow{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 .addrow input{flex:1 1 120px;min-width:0}
-input[type=text],input[type=number],input[type=url],select{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;outline:none}
+textarea{width:100%;resize:vertical;min-height:110px;line-height:1.45}
+input[type=text],input[type=number],input[type=url],input[type=password],select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;outline:none}
 input:focus,select:focus{border-color:var(--accent)}
 .btn{background:transparent;border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer;color:var(--text)}
 .btn:hover{border-color:var(--faint)}
