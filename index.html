@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cockpit</title>
+<meta name="theme-color" content="#0d0f12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cockpit">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="wrap">
+
+  <header class="head">
+    <div class="now">
+      <p class="greet" id="greet">Guten Tag</p>
+      <p class="clock" id="clock">--:--</p>
+      <p class="date" id="date">--</p>
+    </div>
+    <div class="headside">
+      <p class="status" id="status">--</p>
+      <p class="wxnow" id="wxnow">Wetter wird geladen</p>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <div class="col">
+      <section class="card">
+        <h2>Countdowns</h2>
+        <ul class="cd" id="countdowns"></ul>
+      </section>
+
+      <section class="card">
+        <h2>Ausbildung</h2>
+        <dl class="kv">
+          <dt>Einsatz</dt><dd id="deptName">--</dd>
+          <dt>Fortschritt</dt><dd><div class="bar"><i id="deptBar"></i></div><span class="sub" id="deptMeta">--</span></dd>
+          <dt>Danach</dt><dd id="deptNext">--</dd>
+          <dt>Schule</dt><dd id="school">--</dd>
+          <dt>Nächste Prüfung</dt><dd id="nextExam">--</dd>
+        </dl>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="card">
+        <h2>Termine <span class="hint" id="calHint"></span></h2>
+        <div id="calendar"></div>
+      </section>
+
+      <section class="card">
+        <h2>Aufgaben <button class="link" id="clearDone" type="button">Erledigte entfernen</button></h2>
+        <ul class="tasks" id="tasks"></ul>
+        <form class="addrow" id="taskForm">
+          <input id="taskInput" type="text" placeholder="Neue Aufgabe" autocomplete="off" aria-label="Neue Aufgabe">
+          <button class="btn" type="submit">Hinzufügen</button>
+        </form>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="card">
+        <h2>Wetter <span class="hint" id="wxPlace"></span></h2>
+        <div class="wxdays" id="wxdays"></div>
+      </section>
+
+      <section class="card">
+        <h2>Lern-Timer</h2>
+        <div class="timer">
+          <p class="ttime" id="tTime">25:00</p>
+          <p class="sub" id="tPhase">Bereit</p>
+        </div>
+        <div class="trow">
+          <select id="tSubject" aria-label="Fach"></select>
+          <select id="tLen" aria-label="Dauer">
+            <option value="25">25 min</option>
+            <option value="45">45 min</option>
+            <option value="60">60 min</option>
+            <option value="5">Pause 5 min</option>
+          </select>
+        </div>
+        <div class="trow">
+          <button class="btn primary" id="tStart" type="button">Start</button>
+          <button class="btn" id="tStop" type="button">Beenden</button>
+        </div>
+        <div class="stats">
+          <div class="statline"><span>Heute</span><b id="sToday">0 min</b></div>
+          <div class="statline"><span>Diese Woche</span><b id="sWeek">0 min</b></div>
+          <div class="week" id="sBars"></div>
+          <ul class="bysub" id="sBySub"></ul>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Sparziel <span class="hint" id="saveTitle"></span></h2>
+        <p class="savebig"><b id="saveNow">0 €</b> <span class="sub" id="saveGoal">von 1.000 €</span></p>
+        <div class="bar"><i id="saveBar"></i></div>
+        <p class="sub" id="saveMeta">--</p>
+        <form class="addrow" id="saveForm">
+          <input id="saveInput" type="number" inputmode="decimal" step="0.01" placeholder="Betrag" aria-label="Betrag">
+          <button class="btn" type="submit" data-mode="add">Einzahlen</button>
+          <button class="btn" type="button" id="saveSet">Stand setzen</button>
+        </form>
+      </section>
+    </div>
+
+  </div>
+
+  <footer class="foot">
+    <span id="footInfo">Cockpit</span>
+    <button class="link" id="openSettings" type="button">Einstellungen</button>
+  </footer>
+</main>
+
+<dialog id="settings">
+  <form method="dialog" class="dlg">
+    <h2>Einstellungen</h2>
+    <label>Kalender-Adresse
+      <input id="calUrl" type="url" placeholder="https://..." autocomplete="off">
+    </label>
+    <p class="sub">Wird nur auf diesem Mac gespeichert.</p>
+    <h3>Sicherung</h3>
+    <p class="sub">Aufgaben, Lernzeiten und Sparstand liegen nur auf diesem Mac. Hier kannst du sie sichern oder wiederherstellen.</p>
+    <div class="trow">
+      <button class="btn" id="exportBtn" type="button">Sicherung herunterladen</button>
+      <label class="btn filebtn">Sicherung laden<input id="importFile" type="file" accept="application/json" hidden></label>
+    </div>
+    <div class="trow end">
+      <button class="btn" value="cancel">Schließen</button>
+      <button class="btn primary" id="saveSettings" value="ok">Speichern</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>

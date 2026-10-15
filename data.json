@@ -1,0 +1,21 @@
+{
+  "name": "Gerrit",
+  "ort": { "name": "Schellerten", "lat": 52.188, "lon": 10.101 },
+  "countdowns": [
+    { "titel": "Englisch-Präsentation", "datum": "2026-10-30T15:00", "info": "Fisahn · My company, my departments, my responsibilities", "tag": "Präsentation" },
+    { "titel": "Klausur LF05", "datum": "2026-11-06T09:00", "info": "Fisahn", "tag": "Klausur" },
+    { "titel": "Klausur LF07/08", "datum": "2026-11-13T09:50", "info": "Hoppe · Stoff: alles bisher", "tag": "Klausur" },
+    { "titel": "Ende Einsatz FiBu", "datum": "2026-12-31T15:00", "info": "Danach Öffentlichkeitsarbeit", "tag": "Einsatz" },
+    { "titel": "Zwischenprüfung", "datum": "2027-02-24T08:00", "info": "ZWP", "tag": "Prüfung" },
+    { "titel": "Italien-Urlaub", "datum": "2027-06-21T00:00", "info": "Sommer 2027", "tag": "Urlaub" }
+  ],
+  "einsatz": {
+    "abteilung": "Finanzbuchhaltung",
+    "start": "2026-09-01",
+    "ende": "2026-12-31",
+    "danach": "Öffentlichkeitsarbeit",
+    "schule": "BBS Hannah-Arendt · Fr 08:00–16:00"
+  },
+  "sparziel": { "titel": "Italien-Urlaub", "ziel": 1000, "bis": "2027-06-30" },
+  "faecher": ["LF05", "LF07/08", "Zwischenprüfung", "Englisch", "Sonstiges"]
+}
