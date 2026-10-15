@@ -252,3 +252,11 @@ body.has-expanded{overflow:hidden}
 .card.expanded > *:not(h2){zoom:1.25}
 .card.expanded h2{font-size:.8rem}
 @media (max-width:680px){.card.expanded{inset:12px;width:auto;padding:18px}.card.expanded > *:not(h2){zoom:1.1}}
+
+/* Mac-Nutzung */
+.macsum b{font-size:1rem}
+.macapps{list-style:none;margin:10px 0 4px;padding:0;display:grid;gap:7px}
+.macapps li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;font-size:.86rem}
+.macapps .an{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.macapps .ad{font:.8rem var(--mono);color:var(--muted)}
+.macapps .bar{grid-column:1/-1;margin:0;height:4px}

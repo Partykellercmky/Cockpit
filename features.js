@@ -382,6 +382,49 @@ $("spBig").onclick = () => {
   bigTick = setInterval(() => { bigProgress(); }, 500);
 };
 
+/* ---------- Mac-Nutzung (ActivityWatch ueber Supabase) ---------- */
+async function loadMacStats() {
+  const box = $("macStats"), key = store.get("calKey", ""), k = DATA.kalender;
+  if (!key || !k) { box.innerHTML = '<p class="empty">Braucht den Kalender-Schlüssel aus den Einstellungen.</p>'; return; }
+  try {
+    const r = await fetch(k.url.replace("cockpit-calendar", "cockpit-stats") + "?token=" + encodeURIComponent(key), { cache: "no-store", headers: { apikey: k.apikey } });
+    const j = await r.json();
+    if (!r.ok || j.empty || !j.results) { box.innerHTML = '<p class="empty">Noch keine Daten vom Mac. Die Einrichtung läuft über ActivityWatch.</p>'; $("macHint").textContent = ""; return; }
+    renderMacStats(j);
+  } catch { box.innerHTML = '<p class="empty">Statistik gerade nicht erreichbar.</p>'; }
+}
+function renderMacStats(j) {
+  const box = $("macStats"); box.textContent = "";
+  const big = !!document.querySelector(".card.expanded #macStats");
+  const dur = s => { const m = Math.round(s / 60); return m >= 60 ? Math.floor(m / 60) + " h " + pad(m % 60) + " min" : m + " min"; };
+  const days = j.days.map((d, i) => ({ d, apps: j.results[i] || [] }));
+  const totals = days.map(x => x.apps.reduce((a, e) => a + e.duration, 0));
+  const today = days[days.length - 1], tTotal = totals[totals.length - 1];
+  const upd = new Date(j.updated);
+  $("macHint").textContent = "Stand " + pad(upd.getHours()) + ":" + pad(upd.getMinutes());
+  const head = document.createElement("div"); head.className = "statline macsum";
+  head.innerHTML = "<span>Heute aktiv</span><b></b>"; head.querySelector("b").textContent = dur(tTotal);
+  const wk = document.createElement("div"); wk.className = "statline";
+  wk.innerHTML = "<span>Schnitt 7 Tage</span><b></b>"; wk.querySelector("b").textContent = dur(totals.reduce((a, b) => a + b, 0) / 7);
+  box.append(head, wk);
+  const ul = document.createElement("ul"); ul.className = "macapps";
+  const top = today.apps.slice(0, big ? 15 : 6), max = top[0] ? top[0].duration : 1;
+  if (!top.length) ul.innerHTML = '<li class="empty">Heute noch nichts erfasst.</li>';
+  top.forEach(e => {
+    const li = document.createElement("li");
+    li.innerHTML = '<span class="an"></span><span class="ad"></span><div class="bar"><i></i></div>';
+    li.querySelector(".an").textContent = e.data.app || "Unbekannt";
+    li.querySelector(".ad").textContent = dur(e.duration);
+    li.querySelector(".bar i").style.width = (e.duration / max * 100).toFixed(1) + "%";
+    ul.append(li);
+  });
+  box.append(ul);
+  const mx = Math.max(3600, ...totals);
+  const bars = document.createElement("div"); bars.className = "week";
+  bars.innerHTML = days.map((x, i) => '<div title="' + dur(totals[i]) + '"><i class="' + (totals[i] ? "on" : "") + '" style="height:' + Math.max(3, totals[i] / mx * 100) + '%"></i><span>' + WD[new Date(x.d + "T12:00").getDay()] + "</span></div>").join("");
+  box.append(bars);
+}
+
 /* ---------- Kacheln gross anzeigen ---------- */
 let expandedCard = null;
 function closeExpanded() {
@@ -390,6 +433,7 @@ function closeExpanded() {
   c.classList.remove("expanded"); document.body.classList.remove("has-expanded");
   const b = c.querySelector(".growbtn"); if (b) { b.textContent = "Groß"; b.focus(); }
   if (c.querySelector("#calendar")) loadCalendar();
+  if (c.querySelector("#macStats")) loadMacStats();
 }
 function setupGrow() {
   document.querySelectorAll(".grid .card").forEach(card => {
@@ -404,6 +448,7 @@ function setupGrow() {
       expandedCard = card; card.classList.add("expanded"); document.body.classList.add("has-expanded");
       b.textContent = "Schließen";
       if (card.querySelector("#calendar")) loadCalendar();
+      if (card.querySelector("#macStats")) loadMacStats();
     };
     tools.append(b); h.append(tools);
   });
@@ -414,7 +459,8 @@ function setupGrow() {
 /* ---------- Start der Zusatzmodule ---------- */
 function initFeatures() {
   setupGrow();
-  renderPlan(); renderGrades(); loadSeries(); loadSpotify(true);
+  renderPlan(); renderGrades(); loadSeries(); loadSpotify(true); loadMacStats();
+  setInterval(loadMacStats, 5 * 60000);
   setInterval(() => loadSpotify(false), 5000);
   setInterval(() => { if ($("spDialog").open) loadSpotify(true); }, 2500);
   setInterval(loadSeries, 3 * 3600000);
