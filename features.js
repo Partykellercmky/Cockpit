@@ -278,38 +278,46 @@ async function spPickDevice() {
   return list.find(x => x.is_active) || list.find(x => x.type === "Computer") || list[0] || null;
 }
 const spErr = async r => { try { const j = await r.json(); return (j.error && (j.error.reason || j.error.message)) || ""; } catch { return ""; } };
-// Spielt ab, immer gezielt auf einem Geraet, und prueft danach, ob wirklich etwas laeuft
-async function spPlay(body) {
+// Wartet bis zu 5 Sekunden, ob Spotify wirklich spielt
+async function spWaitPlaying() {
+  for (let i = 0; i < 5; i++) {
+    await new Promise(ok => setTimeout(ok, 1000));
+    try {
+      const c = await SP.api("/me/player");
+      const j = c.status === 200 ? await c.json() : null;
+      if (j && j.is_playing && j.item) return j;
+    } catch {}
+  }
+  return null;
+}
+// Spielt ab, immer gezielt auf einem Geraet. Startet nichts, wird der naechste Weg (Ausweichplan) probiert.
+async function spPlay(body, ...fallbacks) {
   const msg = t => { $("bMsg").textContent = t; };
   msg("Starte ...");
   try {
     const dev = await spPickDevice();
     if (!dev) { msg("Kein Spotify-Gerät gefunden. Öffne die Spotify-App auf dem Mac und versuche es nochmal."); return; }
-    // Geraet aufwecken bzw. Wiedergabe dorthin holen, falls es nicht schon aktiv ist
-    if (!dev.is_active) {
-      await SP.api("/me/player", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ device_ids: [dev.id], play: false }) });
-      await new Promise(ok => setTimeout(ok, 600));
+    const tries = [body || {}, ...fallbacks];
+    for (let k = 0; k < tries.length; k++) {
+      const r = await SP.api("/me/player/play?device_id=" + encodeURIComponent(dev.id), { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(tries[k]) });
+      if (!(r.ok || r.status === 204)) {
+        const why = await spErr(r);
+        if (k < tries.length - 1 && r.status !== 429 && why !== "PREMIUM_REQUIRED") continue;
+        msg(r.status === 429 ? "Spotify bremst gerade, bitte kurz warten."
+          : why === "PREMIUM_REQUIRED" ? "Steuern geht nur mit Spotify Premium."
+          : "Abspielen nicht möglich (" + r.status + (why ? ", " + why : "") + ").");
+        return;
+      }
+      SP.startedAt = Date.now(); SP.pauseUntil = 0;
+      msg("Spielt auf " + dev.name + " ...");
+      const j = await spWaitPlaying();
+      if (j) {
+        msg(k > 0 && tries[k].note ? tries[k].note : "");
+        renderSpotify(j); if ($("spDialog").open) renderBig(j);
+        return;
+      }
     }
-    const r = await SP.api("/me/player/play?device_id=" + encodeURIComponent(dev.id), { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) });
-    if (!(r.ok || r.status === 204)) {
-      const why = await spErr(r);
-      msg(r.status === 429 ? "Spotify bremst gerade, bitte kurz warten."
-        : why === "PREMIUM_REQUIRED" ? "Steuern geht nur mit Spotify Premium."
-        : "Abspielen nicht möglich (" + r.status + (why ? ", " + why : "") + ").");
-      return;
-    }
-    SP.startedAt = Date.now(); SP.pauseUntil = 0;
-    msg("Spielt auf " + dev.name + " ...");
-    setTimeout(() => loadSpotify(true), 800);
-    // Nach 6 Sekunden pruefen, ob Spotify wirklich spielt
-    setTimeout(async () => {
-      try {
-        const c = await SP.api("/me/player");
-        const j = c.status === 200 ? await c.json() : null;
-        if (j && j.is_playing && j.item) { msg(""); renderSpotify(j); if ($("spDialog").open) renderBig(j); }
-        else msg("Spotify hat den Befehl angenommen, aber auf „" + dev.name + "“ startet nichts. Öffne die Spotify-App auf dem Mac und versuche es nochmal.");
-      } catch {}
-    }, 6000);
+    msg("Spotify hat den Befehl angenommen, aber auf „" + dev.name + "“ startet nichts. Starte in der Spotify-App auf dem Mac einmal kurz einen Song und versuche es dann nochmal.");
   } catch (e) {
     msg(String(e.message) === "auth" ? "Verbindung abgelaufen. Bitte unter Einstellungen neu verbinden." : "Spotify nicht erreichbar (" + e.message + ").");
   }
@@ -358,7 +366,7 @@ async function showPlaylist(pl) {
   listMsg("Lädt ...");
   try {
     // alle Seiten laden (je 50 Eintraege), bis Spotify keine weitere Seite mehr meldet
-    let url = "/playlists/" + pl.id + "/items?limit=50", rows = [];
+    let url = "/playlists/" + pl.id + "/items?limit=50&market=from_token", rows = [];
     for (let i = 0; url && i < 100; i++) {
       const r = await SP.api(url);
       if (r.status === 429) { // Spotify bremst: kurz warten und dieselbe Seite nochmal
@@ -394,8 +402,11 @@ async function playFrom(rowsShown, idx) {
 async function playFromNow(rowsShown, idx) {
   const sort = $("bSort").value, row = rowsShown[idx];
   if (sort === "orig") { await spPlay({ context_uri: curPlaylist.uri, offset: { position: row ? row.pos : 0 } }); return; }
-  const uris = rowsShown.slice(idx).filter(x => !x.t.is_local).slice(0, 100).map(x => x.t.uri);
-  await spPlay({ uris });
+  const uris = rowsShown.slice(idx).filter(x => !x.t.is_local && x.t.is_playable !== false).slice(0, 50).map(x => x.t.uri);
+  // Ausweichplan: gewaehlten Song direkt aus der Playlist starten (danach geht es in Playlist-Reihenfolge weiter)
+  const fb = row ? { context_uri: curPlaylist.uri, offset: { uri: row.t.uri } } : { context_uri: curPlaylist.uri };
+  Object.defineProperty(fb, "note", { value: "Läuft aus der Playlist. Danach geht es in Playlist-Reihenfolge weiter.", enumerable: false });
+  await spPlay({ uris }, fb);
 }
 function renderPlaylistRows() {
   const ul = $("bList"); ul.textContent = "";
