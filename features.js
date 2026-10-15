@@ -138,7 +138,7 @@ $("seriesForm").onsubmit = async ev => {
 /* ---------- Spotify ---------- */
 const SP = {
   get clientId() { return (DATA.spotify || {}).clientId || ""; },
-  token: null, exp: 0, busy: false, extrasAt: 0, extras: null,
+  token: null, exp: 0, busy: false, extrasAt: 0, extras: null, pauseUntil: 0, startedAt: 0, retryT: null,
   async refresh() {
     const rt = store.get("spRefresh", "");
     if (!rt || !this.clientId) return false;
@@ -164,9 +164,21 @@ async function loadSpotify(force) {
   if (!SP.clientId) { spMsg("Noch nicht eingerichtet."); return; }
   if (!store.get("spRefresh", "")) { spMsg('Nicht verbunden. Unter Einstellungen auf „Mit Spotify verbinden“ klicken.'); return; }
   if (document.hidden && !force) return;
+  // Nach "zu viele Anfragen" (429) wartet Cockpit so lange, wie Spotify es verlangt
+  if (Date.now() < SP.pauseUntil) return;
   try {
     const r = await SP.api("/me/player?additional_types=episode");
+    if (r.status === 429) {
+      SP.pauseUntil = Date.now() + Math.min(60, Number(r.headers.get("Retry-After")) || 5) * 1000;
+      return; // letzten Stand stehen lassen statt "läuft nichts"
+    }
+    if (r.status !== 200 && r.status !== 204) return; // kurzer Spotify-Fehler: letzten Stand behalten
     const cur = r.status === 200 ? await r.json() : null;
+    // Direkt nach dem Starten meldet Spotify oft noch kurz "nichts aktiv". Dann gleich nochmal fragen.
+    if ((!cur || !cur.item) && Date.now() - SP.startedAt < 10000) {
+      clearTimeout(SP.retryT); SP.retryT = setTimeout(() => loadSpotify(true), 1000);
+      return;
+    }
     if (!SP.extras || Date.now() - SP.extrasAt > 10 * 60000) {
       const [rec, top] = await Promise.all([
         SP.api("/me/player/recently-played?limit=4").then(x => x.ok ? x.json() : null),
@@ -268,8 +280,10 @@ async function spPlay(body) {
     if (!dev) { $("bMsg").textContent = "Kein Spotify-Gerät gefunden. Öffne Spotify auf dem Mac oder Handy."; return; }
     r = await SP.api("/me/player/play?device_id=" + encodeURIComponent(dev.id), { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) });
   }
-  $("bMsg").textContent = r.ok || r.status === 204 ? "" : "Abspielen nicht möglich (" + r.status + ").";
-  setTimeout(() => loadSpotify(true), 500);
+  const ok = r.ok || r.status === 204;
+  $("bMsg").textContent = ok ? "" : r.status === 429 ? "Spotify bremst gerade, bitte kurz warten." : "Abspielen nicht möglich (" + r.status + ").";
+  if (ok) { SP.startedAt = Date.now(); SP.pauseUntil = 0; }
+  setTimeout(() => loadSpotify(true), 800);
 }
 async function spCmd(method, path) {
   const r = await SP.api(path, { method });
@@ -315,6 +329,10 @@ async function showPlaylist(pl) {
     let url = "/playlists/" + pl.id + "/items?limit=50", rows = [];
     for (let i = 0; url && i < 100; i++) {
       const r = await SP.api(url);
+      if (r.status === 429) { // Spotify bremst: kurz warten und dieselbe Seite nochmal
+        await new Promise(ok => setTimeout(ok, Math.min(10, Number(r.headers.get("Retry-After")) || 2) * 1000));
+        i--; continue;
+      }
       if (!r.ok) break;
       const j = await r.json();
       rows = rows.concat(j.items || []);
