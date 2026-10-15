@@ -1,13 +1,56 @@
 {
   "name": "Gerrit",
-  "ort": { "name": "Schellerten", "lat": 52.188, "lon": 10.101 },
+  "ort": {
+    "name": "Schellerten",
+    "lat": 52.188,
+    "lon": 10.101
+  },
   "countdowns": [
-    { "titel": "Englisch-Präsentation", "datum": "2026-10-30T15:00", "info": "Fisahn · My company, my departments, my responsibilities", "tag": "Präsentation" },
-    { "titel": "Klausur LF05", "datum": "2026-11-06T09:00", "info": "Fisahn", "tag": "Klausur" },
-    { "titel": "Klausur LF07/08", "datum": "2026-11-13T09:50", "info": "Hoppe · Stoff: alles bisher", "tag": "Klausur" },
-    { "titel": "Ende Einsatz FiBu", "datum": "2026-12-31T15:00", "info": "Danach Öffentlichkeitsarbeit", "tag": "Einsatz" },
-    { "titel": "Zwischenprüfung", "datum": "2027-02-24T08:00", "info": "ZWP", "tag": "Prüfung" },
-    { "titel": "Italien-Urlaub", "datum": "2027-06-21T00:00", "info": "Sommer 2027", "tag": "Urlaub" }
+    {
+      "titel": "Englisch-Präsentation",
+      "datum": "2026-10-30T15:00",
+      "info": "Fisahn · My company, my departments, my responsibilities",
+      "tag": "Präsentation",
+      "fach": "Englisch",
+      "lernziel": 4
+    },
+    {
+      "titel": "Klausur LF05",
+      "datum": "2026-11-06T09:00",
+      "info": "Fisahn",
+      "tag": "Klausur",
+      "fach": "LF05",
+      "lernziel": 10
+    },
+    {
+      "titel": "Klausur LF07/08",
+      "datum": "2026-11-13T09:50",
+      "info": "Hoppe · Stoff: alles bisher",
+      "tag": "Klausur",
+      "fach": "LF07/08",
+      "lernziel": 12
+    },
+    {
+      "titel": "Ende Einsatz FiBu",
+      "datum": "2026-12-31T15:00",
+      "info": "Danach Öffentlichkeitsarbeit",
+      "tag": "Einsatz"
+    },
+    {
+      "titel": "Zwischenprüfung",
+      "datum": "2027-02-24T08:00",
+      "info": "ZWP",
+      "tag": "Prüfung",
+      "fach": "Zwischenprüfung",
+      "lernziel": 40,
+      "lernstart": "2026-12-01"
+    },
+    {
+      "titel": "Italien-Urlaub",
+      "datum": "2027-06-21T00:00",
+      "info": "Sommer 2027",
+      "tag": "Urlaub"
+    }
   ],
   "einsatz": {
     "abteilung": "Finanzbuchhaltung",
@@ -16,10 +59,29 @@
     "danach": "Öffentlichkeitsarbeit",
     "schule": "BBS Hannah-Arendt · Fr 08:00–16:00"
   },
-  "sparziel": { "titel": "Italien-Urlaub", "ziel": 1000, "bis": "2027-06-30" },
+  "sparziel": {
+    "titel": "Italien-Urlaub",
+    "ziel": 1000,
+    "bis": "2027-06-30"
+  },
   "kalender": {
     "url": "https://txucqslsykzfhwugdolt.supabase.co/functions/v1/cockpit-calendar",
     "apikey": "sb_publishable_60QG69Q7CZ6Ai0qrGePH6w_sMXGaSdT"
   },
-  "faecher": ["LF05", "LF07/08", "Zwischenprüfung", "Englisch", "Sonstiges"]
+  "faecher": [
+    "LF05",
+    "LF07/08",
+    "Zwischenprüfung",
+    "Englisch",
+    "Sonstiges"
+  ],
+  "notenziel": 2.5,
+  "serien": [
+    "Outlander",
+    "Yellowstone",
+    "Invincible"
+  ],
+  "spotify": {
+    "clientId": ""
+  }
 }

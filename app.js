@@ -60,7 +60,7 @@ function greeting(h) { return h < 5 ? "Gute Nacht" : h < 11 ? "Guten Morgen" : h
 let lastDay = "";
 function tick() {
   const now = new Date();
-  $("clock").textContent = pad(now.getHours()) + ":" + pad(now.getMinutes());
+  $("clock").innerHTML = pad(now.getHours()) + ":" + pad(now.getMinutes()) + '<span class="sec">' + pad(now.getSeconds()) + "</span>";
   $("date").textContent = WD_LONG[now.getDay()] + ", " + now.getDate() + ". " + MON[now.getMonth()] + " " + now.getFullYear();
   $("greet").textContent = greeting(now.getHours()) + (DATA ? ", " + DATA.name : "");
   const st = dayStatus(now);
@@ -253,7 +253,7 @@ function beep() {
 function logSession(min, subject) {
   if (min < 1) return;
   sessions.push({ d: ymd(new Date()), min: Math.round(min), s: subject });
-  store.set("sessions", sessions); renderStats();
+  store.set("sessions", sessions); renderStats(); if (typeof renderPlan === "function") renderPlan();
 }
 function timerLeft() { if (!timer) return 0; return timer.pausedLeft != null ? timer.pausedLeft : Math.max(0, timer.endAt - Date.now()); }
 function renderTimer() {
@@ -307,34 +307,68 @@ function renderStats() {
   });
 }
 
-/* ---------- Sparziel ---------- */
-let saved = store.get("saved", 0);
-function renderSaving() {
-  const z = DATA.sparziel, goal = z.ziel, bis = new Date(z.bis + "T23:59");
-  $("saveTitle").textContent = z.titel;
-  $("saveNow").textContent = euro(saved);
-  $("saveGoal").textContent = "von " + euro(goal);
-  $("saveBar").style.width = Math.min(100, saved / goal * 100).toFixed(1) + "%";
-  const rest = Math.max(0, goal - saved), now = new Date();
-  let months = (bis.getFullYear() - now.getFullYear()) * 12 + (bis.getMonth() - now.getMonth()) + 1;
-  months = Math.max(1, months);
-  $("saveMeta").textContent = rest <= 0 ? "Ziel erreicht." :
-    "Noch " + euro(rest) + " bis " + fmtD(bis) + " · etwa " + euro(Math.ceil(rest / months)) + " pro Monat (" + months + " Monate)";
+/* ---------- Sparziele (mehrere, selbst angelegt) ---------- */
+// Uebernahme des alten Einzelziels beim ersten Start
+let goals = store.get("goals", null);
+function ensureGoals() {
+  if (goals) return;
+  const z = DATA.sparziel;
+  goals = z ? [{ id: 1, titel: z.titel, ziel: z.ziel, bis: z.bis, stand: store.get("saved", 0) }] : [];
+  store.set("goals", goals);
 }
-$("saveForm").onsubmit = ev => {
-  ev.preventDefault(); const v = parseFloat($("saveInput").value); if (isNaN(v)) return;
-  saved = Math.round((saved + v) * 100) / 100; store.set("saved", saved); $("saveInput").value = ""; renderSaving();
-};
-$("saveSet").onclick = () => {
-  const v = parseFloat($("saveInput").value); if (isNaN(v)) return;
-  saved = Math.round(v * 100) / 100; store.set("saved", saved); $("saveInput").value = ""; renderSaving();
+function saveGoals() { store.set("goals", goals); renderSaving(); }
+const num = v => parseFloat(String(v).replace(",", "."));
+function renderSaving() {
+  ensureGoals();
+  const ul = $("goals"); ul.textContent = "";
+  const total = goals.reduce((a, g) => a + g.stand, 0);
+  $("saveTitle").textContent = goals.length > 1 ? "gesamt " + euro(total) : "";
+  if (!goals.length) { ul.innerHTML = '<li class="empty">Noch kein Sparziel. Leg unten eins an.</li>'; return; }
+  for (const g of goals) {
+    const li = document.createElement("li"); li.className = "goal";
+    li.innerHTML = '<div class="pt"><span class="pn"></span><span class="pv"></span><button class="x" type="button" aria-label="Sparziel löschen">×</button></div>' +
+      '<div class="bar"><i></i></div><p class="sub gm"></p>' +
+      '<form class="addrow"><input type="number" inputmode="decimal" step="0.01" placeholder="Betrag"><button class="btn" type="submit">Einzahlen</button><button class="btn st" type="button">Stand setzen</button></form>';
+    li.querySelector(".pn").textContent = g.titel;
+    li.querySelector(".pv").textContent = euro(g.stand) + " von " + euro(g.ziel);
+    li.querySelector(".bar i").style.width = Math.min(100, g.stand / g.ziel * 100).toFixed(1) + "%";
+    const rest = Math.max(0, g.ziel - g.stand);
+    let meta;
+    if (rest <= 0) meta = "Ziel erreicht.";
+    else if (g.bis) {
+      const bis = new Date(g.bis + "T23:59"), now = new Date();
+      const months = Math.max(1, (bis.getFullYear() - now.getFullYear()) * 12 + (bis.getMonth() - now.getMonth()) + 1);
+      meta = bis < now ? "Noch " + euro(rest) + " · Frist " + fmtD(bis) + " ist vorbei"
+        : "Noch " + euro(rest) + " bis " + fmtD(bis) + " · etwa " + euro(Math.ceil(rest / months)) + " pro Monat (" + months + " Monate)";
+    } else meta = "Noch " + euro(rest) + " · ohne Frist";
+    li.querySelector(".gm").textContent = meta;
+    const inp = li.querySelector("input"); inp.setAttribute("aria-label", "Betrag für " + g.titel);
+    li.querySelector("form").onsubmit = ev => { ev.preventDefault(); const v = num(inp.value); if (isNaN(v)) return; g.stand = Math.round((g.stand + v) * 100) / 100; saveGoals(); };
+    li.querySelector(".st").onclick = () => { const v = num(inp.value); if (isNaN(v)) return; g.stand = Math.round(v * 100) / 100; saveGoals(); };
+    li.querySelector(".x").onclick = () => {
+      const b = li.querySelector(".x");
+      if (b.dataset.sure) { goals = goals.filter(x => x !== g); saveGoals(); }
+      else { b.dataset.sure = "1"; b.textContent = "Löschen?"; setTimeout(() => { if (b.isConnected) { delete b.dataset.sure; b.textContent = "×"; } }, 3000); }
+    };
+    ul.append(li);
+  }
+}
+$("newGoalBtn").onclick = () => { const f = $("goalForm"); f.hidden = !f.hidden; if (!f.hidden) $("goalName").focus(); };
+$("goalForm").onsubmit = ev => {
+  ev.preventDefault();
+  const t = $("goalName").value.trim(), z = num($("goalAmount").value), bis = $("goalDate").value;
+  if (!t || !(z > 0)) return;
+  ensureGoals();
+  goals.push({ id: Date.now(), titel: t, ziel: z, bis: bis || "", stand: 0 });
+  $("goalName").value = ""; $("goalAmount").value = ""; $("goalDate").value = ""; $("goalForm").hidden = true;
+  saveGoals();
 };
 
 /* ---------- Einstellungen und Sicherung ---------- */
 $("openSettings").onclick = () => { $("calKey").value = store.get("calKey", ""); $("settings").showModal(); };
 $("saveSettings").onclick = () => { store.set("calKey", $("calKey").value.trim()); loadCalendar(); };
 $("exportBtn").onclick = () => {
-  const blob = new Blob([JSON.stringify({ tasks, sessions, saved, note: store.get("note", ""), calKey: store.get("calKey", "") }, null, 2)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify({ tasks, sessions, goals, grades, planGoals: store.get("planGoals", {}), series: store.get("series", null), note: store.get("note", ""), calKey: store.get("calKey", "") }, null, 2)], { type: "application/json" });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "cockpit-sicherung-" + ymd(new Date()) + ".json"; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 };
@@ -345,7 +379,11 @@ $("importFile").onchange = async ev => {
     if (Array.isArray(d.tasks)) { tasks = d.tasks; store.set("tasks", tasks); }
     if (Array.isArray(d.sessions)) { sessions = d.sessions; store.set("sessions", sessions); }
     if (typeof d.note === "string") { store.set("note", d.note); $("note").value = d.note; }
-    if (typeof d.saved === "number") { saved = d.saved; store.set("saved", saved); }
+    if (Array.isArray(d.goals)) { goals = d.goals; store.set("goals", goals); }
+    else if (typeof d.saved === "number") { store.set("saved", d.saved); goals = null; store.set("goals", null); }
+    if (Array.isArray(d.grades)) { grades = d.grades; store.set("grades", grades); }
+    if (d.planGoals) store.set("planGoals", d.planGoals);
+    if (Array.isArray(d.series)) { seriesList = d.series; store.set("series", seriesList); }
     if (typeof d.calKey === "string") store.set("calKey", d.calKey);
     renderTasks(); renderStats(); renderSaving(); loadCalendar();
     $("footInfo").textContent = "Sicherung geladen";
@@ -353,7 +391,7 @@ $("importFile").onchange = async ev => {
 };
 
 /* ---------- Start ---------- */
-function renderDaily() { renderCountdowns(); renderDept(); renderSaving(); renderStats(); }
+function renderDaily() { renderCountdowns(); renderDept(); renderSaving(); renderStats(); if (typeof renderPlan === "function") renderPlan(); }
 
 async function init() {
   try { const r = await fetch("data.json", { cache: "no-cache" }); DATA = await r.json(); }
@@ -364,6 +402,7 @@ async function init() {
   if (timer) { sel.value = timer.subject; $("tLen").value = String(timer.len); }
   renderTasks(); tick(); renderTimer();
   loadWeather(); loadCalendar();
+  if (typeof initFeatures === "function") initFeatures();
   setInterval(tick, 1000);
   setInterval(renderTimer, 1000);
   setInterval(loadWeather, 30 * 60000);

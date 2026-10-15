@@ -147,3 +147,62 @@ dialog::backdrop{background:rgba(0,0,0,.55)}
 .filebtn{display:flex;align-items:center;justify-content:center;text-align:center}
 
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+
+/* Uhr-Sekunden */
+.clock .sec{font-size:.42em;color:var(--faint);margin-left:.18em;letter-spacing:0}
+
+/* Lernplan und Sparziele */
+.plan,.goals{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.pt{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.pn{font-weight:500;min-width:0;overflow-wrap:anywhere}
+.pv{font:.82rem var(--mono);color:var(--muted);white-space:nowrap}
+.pt .x{background:none;border:0;color:var(--faint);cursor:pointer;padding:0 0 0 4px;font-size:1rem}
+.pt .x:hover,.pt .x[data-sure]{color:var(--crit);font-size:.8rem}
+.pm{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.ps{color:var(--muted);font-size:.8rem}
+.plan li.behind .ps{color:var(--warn)}
+.plan li.behind .bar i{background:var(--warn)}
+.pg{display:flex;align-items:center;gap:4px;font-size:.78rem;color:var(--faint)}
+.pg input{width:4.2em;padding:3px 6px;font-size:.8rem}
+.goal .addrow{margin-top:8px}
+.btn.wide{width:100%;margin-top:14px}
+.goalform{display:grid;gap:8px;margin-top:10px}
+.goalform .trow{margin:0}
+input[type=date]{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;color-scheme:dark;min-width:0}
+
+/* Noten */
+.savebig b.good{color:var(--ok)}
+.savebig b.bad{color:var(--warn)}
+.gradelist{list-style:none;margin:10px 0 0;padding:8px 0 0;border-top:1px solid var(--line);display:grid;gap:2px}
+.gradelist li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;font-size:.82rem;color:var(--muted)}
+.gradelist b{font:400 .85rem var(--mono);color:var(--text)}
+.gradelist .x,.series .x{background:none;border:0;color:var(--faint);cursor:pointer;padding:0 4px}
+.gradelist .x:hover,.series .x:hover{color:var(--crit)}
+.narrow{flex:0 0 5.5em !important;width:5.5em}
+
+/* Serien */
+.series{list-style:none;margin:0;padding:0}
+.series li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.series li:first-child{border-top:0;padding-top:0}
+.series .sn{display:block;font-weight:500}
+.series .sm{display:block;font-size:.78rem;color:var(--muted);overflow-wrap:anywhere}
+.series .sd{font:.8rem var(--mono);color:var(--accent);white-space:nowrap}
+.series li.soon .sd{color:var(--warn)}
+.series li.quiet .sd{color:var(--faint)}
+
+/* Spotify */
+.spnow{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:center}
+.spnow img{width:64px;height:64px;border-radius:6px;object-fit:cover;display:block}
+.spnow .empty{grid-column:1/-1}
+.spt{min-width:0}
+.spt b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spt > span{display:block;color:var(--muted);font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spt .sptime{font:.72rem var(--mono);color:var(--faint)}
+.spctl{margin-top:12px}
+.spmore{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.splist{margin:0;padding:0 0 0 1.1em;font-size:.8rem;color:var(--muted);display:grid;gap:2px}
+.splist.rec{list-style:none;padding:0}
+.splist li{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inlink{color:var(--accent)}
+.goalform[hidden]{display:none}
+.goalform > *, .goalform .trow > *{min-width:0;width:100%}

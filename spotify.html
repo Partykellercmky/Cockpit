@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cockpit · Spotify verbinden</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.box{max-width:520px;margin:12vh auto;padding:0 16px;display:grid;gap:14px}
+.code{font:.85rem var(--mono);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;word-break:break-all;user-select:all}
+h1{font:500 .8rem var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0}
+</style>
+</head>
+<body>
+<main class="box">
+  <h1>Spotify verbinden</h1>
+  <p id="msg">Einen Moment ...</p>
+  <div id="out" hidden>
+    <p class="code" id="code"></p>
+    <div class="trow"><button class="btn primary" id="copy" type="button">Code kopieren</button></div>
+    <p class="sub">Diesen Code in Cockpit unter Einstellungen bei „Spotify-Verbindungscode“ einfügen. Er ist nur für dich, nicht weitergeben.</p>
+  </div>
+</main>
+<script>
+"use strict";
+// Anmeldung mit PKCE: kein geheimer Schluessel noetig, alles passiert im Browser.
+const SCOPES = "user-read-currently-playing user-read-playback-state user-modify-playback-state user-read-recently-played user-top-read";
+const REDIRECT = location.origin + location.pathname;
+const msg = t => document.getElementById("msg").textContent = t;
+const ss = { get: k => { try { return sessionStorage.getItem(k) || localStorage.getItem(k); } catch { return null; } },
+             set: (k, v) => { try { sessionStorage.setItem(k, v); localStorage.setItem(k, v); } catch {} },
+             del: k => { try { sessionStorage.removeItem(k); localStorage.removeItem(k); } catch {} } };
+const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+(async () => {
+  const data = await fetch("data.json", { cache: "no-cache" }).then(r => r.json());
+  const clientId = (data.spotify || {}).clientId;
+  if (!clientId) { msg("Spotify ist in Cockpit noch nicht eingerichtet (Client ID fehlt)."); return; }
+  const q = new URLSearchParams(location.search);
+  if (q.get("error")) { msg("Anmeldung abgebrochen: " + q.get("error")); return; }
+  if (!q.get("code")) {
+    const verifier = b64(crypto.getRandomValues(new Uint8Array(48)));
+    const challenge = b64(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)));
+    const state = b64(crypto.getRandomValues(new Uint8Array(12)));
+    ss.set("sp_verifier", verifier); ss.set("sp_state", state);
+    location.href = "https://accounts.spotify.com/authorize?" + new URLSearchParams({
+      response_type: "code", client_id: clientId, scope: SCOPES, redirect_uri: REDIRECT,
+      code_challenge_method: "S256", code_challenge: challenge, state
+    });
+    return;
+  }
+  if (q.get("state") !== ss.get("sp_state")) { msg("Sicherheitsprüfung fehlgeschlagen. Bitte noch einmal von vorn starten."); return; }
+  const r = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ grant_type: "authorization_code", code: q.get("code"), redirect_uri: REDIRECT, client_id: clientId, code_verifier: ss.get("sp_verifier") })
+  });
+  ss.del("sp_verifier"); ss.del("sp_state");
+  history.replaceState(null, "", REDIRECT);
+  if (!r.ok) { msg("Spotify hat die Anmeldung abgelehnt (" + r.status + "). Bitte noch einmal versuchen."); return; }
+  const j = await r.json();
+  try { localStorage.setItem("cockpit.spRefresh", JSON.stringify(j.refresh_token)); } catch {}
+  msg("Verbunden. Falls Cockpit als App im Dock läuft, kopiere diesen Code und füge ihn dort unter Einstellungen ein:");
+  document.getElementById("code").textContent = j.refresh_token;
+  document.getElementById("out").hidden = false;
+  document.getElementById("copy").onclick = async () => {
+    try { await navigator.clipboard.writeText(j.refresh_token); document.getElementById("copy").textContent = "Kopiert"; } catch {}
+  };
+})().catch(() => msg("Etwas ist schiefgelaufen. Bitte noch einmal versuchen."));
+</script>
+</body>
+</html>

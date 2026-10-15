@@ -38,6 +38,11 @@
       </section>
 
       <section class="card">
+        <h2>Lernplan <span class="hint">Stunden aus dem Lern-Timer</span></h2>
+        <ul class="plan" id="plan"></ul>
+      </section>
+
+      <section class="card">
         <h2>Ausbildung</h2>
         <dl class="kv">
           <dt>Einsatz</dt><dd id="deptName">--</dd>
@@ -46,6 +51,19 @@
           <dt>Schule</dt><dd id="school">--</dd>
           <dt>Nächste Prüfung</dt><dd id="nextExam">--</dd>
         </dl>
+      </section>
+
+      <section class="card">
+        <h2>Noten <span class="hint" id="gradeGoal"></span></h2>
+        <p class="savebig"><b id="gradeAvg">--</b> <span class="sub" id="gradeMeta">Noch keine Noten</span></p>
+        <ul class="bysub" id="gradeBySub"></ul>
+        <ul class="gradelist" id="gradeList"></ul>
+        <form class="addrow" id="gradeForm">
+          <input id="gradeSubject" type="text" list="subjectList" placeholder="Fach" autocomplete="off" aria-label="Fach">
+          <input id="gradeValue" type="number" step="0.1" min="1" max="6" placeholder="Note" aria-label="Note" class="narrow">
+          <button class="btn" type="submit">Eintragen</button>
+        </form>
+        <datalist id="subjectList"></datalist>
       </section>
     </div>
 
@@ -68,9 +86,23 @@
         <h2>Schnellnotiz <span class="hint" id="noteHint"></span></h2>
         <textarea id="note" rows="6" placeholder="Gedanken, Nummern, Ideen ..." aria-label="Schnellnotiz"></textarea>
       </section>
+
+      <section class="card">
+        <h2>Serien <span class="hint">nächste Folgen</span></h2>
+        <ul class="series" id="series"></ul>
+        <form class="addrow" id="seriesForm">
+          <input id="seriesInput" type="text" placeholder="Serie hinzufügen" autocomplete="off" aria-label="Serie hinzufügen">
+          <button class="btn" type="submit">Hinzufügen</button>
+        </form>
+      </section>
     </div>
 
     <div class="col">
+      <section class="card">
+        <h2>Spotify <span class="hint" id="spHint"></span></h2>
+        <div id="spotify"></div>
+      </section>
+
       <section class="card">
         <h2>Wetter <span class="hint" id="wxPlace"></span></h2>
         <div class="wxdays" id="wxdays"></div>
@@ -104,14 +136,16 @@
       </section>
 
       <section class="card">
-        <h2>Sparziel <span class="hint" id="saveTitle"></span></h2>
-        <p class="savebig"><b id="saveNow">0 €</b> <span class="sub" id="saveGoal">von 1.000 €</span></p>
-        <div class="bar"><i id="saveBar"></i></div>
-        <p class="sub" id="saveMeta">--</p>
-        <form class="addrow" id="saveForm">
-          <input id="saveInput" type="number" inputmode="decimal" step="0.01" placeholder="Betrag" aria-label="Betrag">
-          <button class="btn" type="submit" data-mode="add">Einzahlen</button>
-          <button class="btn" type="button" id="saveSet">Stand setzen</button>
+        <h2>Sparziele <span class="hint" id="saveTitle"></span></h2>
+        <ul class="goals" id="goals"></ul>
+        <button class="btn wide" id="newGoalBtn" type="button">Neues Sparziel</button>
+        <form class="goalform" id="goalForm" hidden>
+          <input id="goalName" type="text" placeholder="Name, z. B. Neues Handy" autocomplete="off" aria-label="Name des Sparziels">
+          <div class="trow">
+            <input id="goalAmount" type="number" inputmode="decimal" step="0.01" min="1" placeholder="Zielbetrag in €" aria-label="Zielbetrag">
+            <input id="goalDate" type="date" aria-label="Frist (optional)" title="Frist (optional)">
+          </div>
+          <button class="btn primary" type="submit">Anlegen</button>
         </form>
       </section>
     </div>
@@ -131,6 +165,10 @@
       <input id="calKey" type="password" placeholder="Schlüssel einfügen" autocomplete="off">
     </label>
     <p class="sub">Wird nur auf diesem Mac gespeichert.</p>
+    <label>Spotify-Verbindungscode
+      <input id="spCode" type="password" placeholder="Code einfügen" autocomplete="off">
+    </label>
+    <p class="sub"><a href="spotify.html" target="_blank" rel="noopener" class="inlink">Mit Spotify verbinden</a> öffnet die Anmeldung. Den Code, der danach angezeigt wird, hier einfügen.</p>
     <h3>Sicherung</h3>
     <p class="sub">Aufgaben, Lernzeiten und Sparstand liegen nur auf diesem Mac. Hier kannst du sie sichern oder wiederherstellen.</p>
     <div class="trow">
@@ -145,5 +183,6 @@
 </dialog>
 
 <script src="app.js"></script>
+<script src="features.js"></script>
 </body>
 </html>
