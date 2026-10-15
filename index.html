@@ -99,7 +99,7 @@
 
     <div class="col">
       <section class="card">
-        <h2>Spotify <span class="hint" id="spHint"></span></h2>
+        <h2>Spotify <span class="hint"><span id="spHint"></span> <button class="link" id="spBig" type="button">Groß</button></span></h2>
         <div id="spotify"></div>
       </section>
 
@@ -157,6 +157,33 @@
     <button class="link" id="openSettings" type="button">Einstellungen</button>
   </footer>
 </main>
+
+<dialog id="spDialog" class="spdlg" aria-label="Spotify">
+  <div class="spbig">
+    <div class="spleft">
+      <img id="bCover" alt="">
+      <div class="btitle"><b id="bName">--</b><span id="bArtist"></span></div>
+      <div class="bar big"><i id="bBar"></i></div>
+      <div class="btime"><span id="bPos">0:00</span><span id="bDev"></span><span id="bDur">0:00</span></div>
+      <div class="bctl">
+        <button class="btn" id="bShuffle" type="button" aria-pressed="false">Zufall</button>
+        <button class="btn" id="bPrev" type="button">Zurück</button>
+        <button class="btn primary" id="bPlay" type="button">Abspielen</button>
+        <button class="btn" id="bNext" type="button">Weiter</button>
+      </div>
+      <p class="sub" id="bMsg"></p>
+    </div>
+    <div class="spright">
+      <div class="sphead">
+        <button class="link" id="bBack" type="button" hidden>Zurück zu Playlists</button>
+        <h2 id="bListTitle">Deine Playlists</h2>
+        <button class="btn" id="bClose" type="button">Schließen</button>
+      </div>
+      <button class="btn primary wide" id="bPlayAll" type="button" hidden>Ganze Playlist abspielen</button>
+      <ul class="bl" id="bList"></ul>
+    </div>
+  </div>
+</dialog>
 
 <dialog id="settings">
   <form method="dialog" class="dlg">

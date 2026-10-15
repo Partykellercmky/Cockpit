@@ -175,6 +175,7 @@ async function loadSpotify(force) {
       SP.extras = { rec: rec ? rec.items : [], top: top ? top.items : [] }; SP.extrasAt = Date.now();
     }
     renderSpotify(cur);
+    if ($("spDialog").open) renderBig(cur);
   } catch (e) {
     if (String(e.message) === "auth") spMsg("Verbindung abgelaufen. Bitte unter Einstellungen neu verbinden.");
     else spMsg("Spotify gerade nicht erreichbar.");
@@ -228,10 +229,129 @@ $("spCode").addEventListener("change", () => {
   if (v) { store.set("spRefresh", v); SP.token = null; SP.extras = null; $("spCode").value = ""; $("spCode").placeholder = "Code gespeichert"; loadSpotify(true); }
 });
 
+/* ---------- Spotify gross: Player und Playlists ---------- */
+const tfmt = ms => Math.floor(ms / 60000) + ":" + pad(Math.floor(ms / 1000) % 60);
+let bigState = null, bigTick = null, curPlaylist = null;
+function renderBig(cur) {
+  bigState = cur;
+  const item = cur && cur.item;
+  if (!item) {
+    $("bName").textContent = "Gerade läuft nichts"; $("bArtist").textContent = "Wähle rechts eine Playlist."; $("bCover").removeAttribute("src");
+    $("bBar").style.width = "0"; $("bPos").textContent = "0:00"; $("bDur").textContent = "0:00"; $("bDev").textContent = "";
+    $("bPlay").textContent = "Abspielen"; return;
+  }
+  const imgs = item.album ? item.album.images : item.images || [];
+  if (imgs[0] && $("bCover").src !== imgs[0].url) $("bCover").src = imgs[0].url;
+  $("bName").textContent = item.name;
+  $("bArtist").textContent = item.artists ? item.artists.map(a => a.name).join(", ") : (item.show ? item.show.name : "");
+  $("bDur").textContent = tfmt(item.duration_ms);
+  $("bDev").textContent = cur.device ? cur.device.name : "";
+  $("bPlay").textContent = cur.is_playing ? "Pause" : "Abspielen";
+  $("bShuffle").setAttribute("aria-pressed", cur.shuffle_state ? "true" : "false");
+  cur._at = Date.now();
+  bigProgress();
+}
+function bigProgress() {
+  const c = bigState; if (!c || !c.item) return;
+  const pos = Math.min(c.item.duration_ms, c.progress_ms + (c.is_playing ? Date.now() - c._at : 0));
+  $("bBar").style.width = (pos / c.item.duration_ms * 100).toFixed(2) + "%";
+  $("bPos").textContent = tfmt(pos);
+}
+// Spielt ab; ohne aktives Geraet wird das erste verfuegbare genommen
+async function spPlay(body) {
+  let r = await SP.api("/me/player/play", { method: "PUT", headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+  if (r.status === 404) {
+    const d = await SP.api("/me/player/devices").then(x => x.ok ? x.json() : { devices: [] });
+    const dev = d.devices[0];
+    if (!dev) { $("bMsg").textContent = "Kein Spotify-Gerät gefunden. Öffne Spotify auf dem Mac oder Handy."; return; }
+    r = await SP.api("/me/player/play?device_id=" + encodeURIComponent(dev.id), { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) });
+  }
+  $("bMsg").textContent = r.ok || r.status === 204 ? "" : "Abspielen nicht möglich (" + r.status + ").";
+  setTimeout(() => loadSpotify(true), 500);
+}
+async function spCmd(method, path) {
+  const r = await SP.api(path, { method });
+  if (r.status === 404) $("bMsg").textContent = "Kein aktives Gerät. Starte zuerst eine Playlist.";
+  setTimeout(() => loadSpotify(true), 400);
+}
+$("bPlay").onclick = () => bigState && bigState.is_playing ? spCmd("PUT", "/me/player/pause") : spPlay();
+$("bPrev").onclick = () => spCmd("POST", "/me/player/previous");
+$("bNext").onclick = () => spCmd("POST", "/me/player/next");
+$("bShuffle").onclick = () => spCmd("PUT", "/me/player/shuffle?state=" + !(bigState && bigState.shuffle_state));
+
+function listMsg(t) { $("bList").innerHTML = '<li class="empty"></li>'; $("bList").firstChild.textContent = t; }
+async function showPlaylists() {
+  curPlaylist = null;
+  $("bListTitle").textContent = "Deine Playlists"; $("bBack").hidden = true; $("bPlayAll").hidden = true;
+  listMsg("Lädt ...");
+  try {
+    const r = await SP.api("/me/playlists?limit=50");
+    if (r.status === 403 || r.status === 401) { listMsg("Für Playlists bitte Spotify einmal neu verbinden (Einstellungen > Mit Spotify verbinden)."); return; }
+    const j = await r.json(), ul = $("bList"); ul.textContent = "";
+    for (const pl of j.items.filter(Boolean)) {
+      const li = document.createElement("li"); li.className = "bpl";
+      li.innerHTML = '<img alt=""><div><b></b><span></span></div>';
+      const img = (pl.images || []).slice(-1)[0]; if (img) li.querySelector("img").src = img.url; else li.querySelector("img").remove();
+      li.querySelector("b").textContent = pl.name;
+      const n = (pl.items || pl.tracks || {}).total;
+      li.querySelector("span").textContent = (pl.owner && pl.owner.display_name ? pl.owner.display_name : "") + (n != null ? " · " + n + " Songs" : "");
+      li.tabIndex = 0; li.setAttribute("role", "button");
+      li.onclick = () => showPlaylist(pl);
+      li.onkeydown = e => { if (e.key === "Enter") showPlaylist(pl); };
+      ul.append(li);
+    }
+    if (!j.items.length) listMsg("Keine Playlists gefunden.");
+  } catch { listMsg("Playlists gerade nicht erreichbar."); }
+}
+async function showPlaylist(pl) {
+  curPlaylist = pl;
+  $("bListTitle").textContent = pl.name; $("bBack").hidden = false; $("bPlayAll").hidden = false;
+  listMsg("Lädt ...");
+  try {
+    let url = "/playlists/" + pl.id + "/items?limit=100", rows = [];
+    for (let i = 0; url && i < 5; i++) {
+      const r = await SP.api(url);
+      if (!r.ok) break;
+      const j = await r.json();
+      rows = rows.concat(j.items || []);
+      url = j.next ? j.next.replace("https://api.spotify.com/v1", "") : null;
+    }
+    const ul = $("bList"); ul.textContent = "";
+    const tracks = rows.map(x => x.item || x.track).filter(t => t && t.uri && !t.is_local);
+    if (!tracks.length) { listMsg("Die Songs dieser Playlist zeigt Spotify nur dem Besitzer. Du kannst sie aber als Ganzes abspielen."); return; }
+    tracks.forEach((t, i) => {
+      const li = document.createElement("li"); li.className = "btr";
+      li.innerHTML = '<span class="bn"></span><div><b></b><span></span></div><span class="bd"></span>';
+      li.querySelector(".bn").textContent = i + 1;
+      li.querySelector("b").textContent = t.name;
+      li.querySelector("div span").textContent = (t.artists || []).map(a => a.name).join(", ");
+      li.querySelector(".bd").textContent = tfmt(t.duration_ms || 0);
+      if (bigState && bigState.item && bigState.item.uri === t.uri) li.classList.add("now");
+      li.tabIndex = 0; li.setAttribute("role", "button");
+      const go = () => spPlay({ context_uri: pl.uri, offset: { uri: t.uri } });
+      li.onclick = go; li.onkeydown = e => { if (e.key === "Enter") go(); };
+      ul.append(li);
+    });
+  } catch { listMsg("Songs gerade nicht erreichbar."); }
+}
+$("bPlayAll").onclick = () => curPlaylist && spPlay({ context_uri: curPlaylist.uri });
+$("bBack").onclick = showPlaylists;
+$("bClose").onclick = () => $("spDialog").close();
+$("spDialog").addEventListener("close", () => { clearInterval(bigTick); bigTick = null; });
+$("spBig").onclick = () => {
+  if (!store.get("spRefresh", "")) { $("openSettings").click(); return; }
+  $("bMsg").textContent = "";
+  $("spDialog").showModal();
+  loadSpotify(true); showPlaylists();
+  clearInterval(bigTick);
+  bigTick = setInterval(() => { bigProgress(); }, 500);
+};
+
 /* ---------- Start der Zusatzmodule ---------- */
 function initFeatures() {
   renderPlan(); renderGrades(); loadSeries(); loadSpotify(true);
   setInterval(() => loadSpotify(false), 5000);
+  setInterval(() => { if ($("spDialog").open) loadSpotify(true); }, 2500);
   setInterval(loadSeries, 3 * 3600000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) loadSpotify(true); });
 }

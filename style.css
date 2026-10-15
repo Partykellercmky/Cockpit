@@ -206,3 +206,32 @@ input[type=date]{background:var(--bg);border:1px solid var(--line);border-radius
 .inlink{color:var(--accent)}
 .goalform[hidden]{display:none}
 .goalform > *, .goalform .trow > *{min-width:0;width:100%}
+
+/* Spotify gross */
+.spdlg{width:min(1180px,calc(100vw - 32px));height:min(760px,calc(100vh - 32px));max-width:none;max-height:none}
+.spbig{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);height:100%}
+.spleft{padding:32px;display:flex;flex-direction:column;justify-content:center;gap:14px;border-right:1px solid var(--line);min-width:0}
+.spleft img{width:100%;max-width:380px;aspect-ratio:1;object-fit:cover;border-radius:10px;align-self:center;background:var(--bg)}
+.spleft img:not([src]){visibility:hidden}
+.btitle b{display:block;font-size:1.35rem;font-weight:600;overflow-wrap:anywhere}
+.btitle span{display:block;color:var(--muted)}
+.bar.big{height:6px}
+.bar.big i{transition:none}
+.btime{display:flex;justify-content:space-between;font:.78rem var(--mono);color:var(--faint);gap:10px}
+.bctl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.btn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.spright{display:flex;flex-direction:column;min-height:0;min-width:0;padding:20px 20px 0}
+.sphead{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.sphead h2{flex:1;margin:0;font:500 .8rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.spright .btn.wide{margin:0 0 10px}
+.bl{list-style:none;margin:0;padding:0 0 20px;overflow:auto;flex:1;min-height:0}
+.bpl,.btr{display:grid;align-items:center;gap:12px;padding:7px 8px;border-radius:8px;cursor:pointer}
+.bpl{grid-template-columns:44px minmax(0,1fr)}
+.bpl img{width:44px;height:44px;border-radius:4px;object-fit:cover}
+.btr{grid-template-columns:2.2em minmax(0,1fr) auto}
+.bpl:hover,.btr:hover,.bpl:focus-visible,.btr:focus-visible{background:var(--bg);outline:none}
+.bpl b,.btr b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bpl div span,.btr div span{display:block;font-size:.8rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bn,.bd{font:.78rem var(--mono);color:var(--faint);text-align:right}
+.btr.now b{color:var(--accent)}
+@media (max-width:820px){.spbig{grid-template-columns:1fr;overflow:auto}.spleft{border-right:0;border-bottom:1px solid var(--line)}.spleft img{max-width:220px}}

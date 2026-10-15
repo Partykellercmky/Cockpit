@@ -24,7 +24,7 @@ h1{font:500 .8rem var(--mono);letter-spacing:.14em;text-transform:uppercase;colo
 <script>
 "use strict";
 // Anmeldung mit PKCE: kein geheimer Schluessel noetig, alles passiert im Browser.
-const SCOPES = "user-read-currently-playing user-read-playback-state user-modify-playback-state user-read-recently-played user-top-read";
+const SCOPES = "user-read-currently-playing user-read-playback-state user-modify-playback-state user-read-recently-played user-top-read playlist-read-private playlist-read-collaborative";
 const REDIRECT = location.origin + location.pathname;
 const msg = t => document.getElementById("msg").textContent = t;
 const ss = { get: k => { try { return sessionStorage.getItem(k) || localStorage.getItem(k); } catch { return null; } },
