@@ -136,10 +136,13 @@ async function loadWeather() {
 
 /* ---------- Kalender ---------- */
 async function loadCalendar() {
-  const url = store.get("calUrl", ""), box = $("calendar");
-  if (!url) { box.innerHTML = '<p class="empty">Noch nicht verbunden. Die Adresse trägst du unter Einstellungen ein.</p>'; $("calHint").textContent = ""; return; }
+  const key = store.get("calKey", ""), box = $("calendar"), k = DATA.kalender;
+  const url = key && k ? k.url + "?token=" + encodeURIComponent(key) : "";
+  if (!url) { box.innerHTML = '<p class="empty">Noch nicht verbunden. Den Kalender-Schlüssel trägst du unter Einstellungen ein.</p>'; $("calHint").textContent = ""; return; }
   try {
-    const r = await fetch(url, { cache: "no-store" }); if (!r.ok) throw 0;
+    const r = await fetch(url, { cache: "no-store", headers: { apikey: k.apikey } });
+    if (r.status === 401) { box.innerHTML = '<p class="empty">Kalender-Schlüssel stimmt nicht. Bitte unter Einstellungen prüfen.</p>'; return; }
+    if (!r.ok) throw 0;
     const raw = await r.json(); const evs = (Array.isArray(raw) ? raw : raw.events || [])
       .map(e => ({ title: e.title || e.summary || "(ohne Titel)", start: new Date(e.start), end: new Date(e.end || e.start), allDay: !!e.allDay }))
       .filter(e => e.end >= sod(new Date())).sort((a, b) => a.start - b.start);
@@ -279,10 +282,10 @@ $("saveSet").onclick = () => {
 };
 
 /* ---------- Einstellungen und Sicherung ---------- */
-$("openSettings").onclick = () => { $("calUrl").value = store.get("calUrl", ""); $("settings").showModal(); };
-$("saveSettings").onclick = () => { store.set("calUrl", $("calUrl").value.trim()); loadCalendar(); };
+$("openSettings").onclick = () => { $("calKey").value = store.get("calKey", ""); $("settings").showModal(); };
+$("saveSettings").onclick = () => { store.set("calKey", $("calKey").value.trim()); loadCalendar(); };
 $("exportBtn").onclick = () => {
-  const blob = new Blob([JSON.stringify({ tasks, sessions, saved, calUrl: store.get("calUrl", "") }, null, 2)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify({ tasks, sessions, saved, calKey: store.get("calKey", "") }, null, 2)], { type: "application/json" });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "cockpit-sicherung-" + ymd(new Date()) + ".json"; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 };
@@ -293,7 +296,7 @@ $("importFile").onchange = async ev => {
     if (Array.isArray(d.tasks)) { tasks = d.tasks; store.set("tasks", tasks); }
     if (Array.isArray(d.sessions)) { sessions = d.sessions; store.set("sessions", sessions); }
     if (typeof d.saved === "number") { saved = d.saved; store.set("saved", saved); }
-    if (typeof d.calUrl === "string") store.set("calUrl", d.calUrl);
+    if (typeof d.calKey === "string") store.set("calKey", d.calKey);
     renderTasks(); renderStats(); renderSaving(); loadCalendar();
     $("footInfo").textContent = "Sicherung geladen";
   } catch { $("footInfo").textContent = "Sicherung konnte nicht gelesen werden"; }

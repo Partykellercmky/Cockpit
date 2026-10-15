@@ -17,5 +17,9 @@
     "schule": "BBS Hannah-Arendt · Fr 08:00–16:00"
   },
   "sparziel": { "titel": "Italien-Urlaub", "ziel": 1000, "bis": "2027-06-30" },
+  "kalender": {
+    "url": "https://txucqslsykzfhwugdolt.supabase.co/functions/v1/cockpit-calendar",
+    "apikey": "sb_publishable_60QG69Q7CZ6Ai0qrGePH6w_sMXGaSdT"
+  },
   "faecher": ["LF05", "LF07/08", "Zwischenprüfung", "Englisch", "Sonstiges"]
 }
