@@ -283,7 +283,7 @@ $("bShuffle").onclick = () => spCmd("PUT", "/me/player/shuffle?state=" + !(bigSt
 function listMsg(t) { $("bList").innerHTML = '<li class="empty"></li>'; $("bList").firstChild.textContent = t; }
 async function showPlaylists() {
   curPlaylist = null;
-  $("bListTitle").textContent = "Deine Playlists"; $("bBack").hidden = true; $("bPlayAll").hidden = true;
+  $("bListTitle").textContent = "Deine Playlists"; $("bBack").hidden = true; $("bPlayAll").hidden = true; $("bSortRow").hidden = true; plRows = [];
   listMsg("Lädt ...");
   try {
     const r = await SP.api("/me/playlists?limit=50");
@@ -304,38 +304,64 @@ async function showPlaylists() {
     if (!j.items.length) listMsg("Keine Playlists gefunden.");
   } catch { listMsg("Playlists gerade nicht erreichbar."); }
 }
+let plRows = [];
 async function showPlaylist(pl) {
-  curPlaylist = pl;
-  $("bListTitle").textContent = pl.name; $("bBack").hidden = false; $("bPlayAll").hidden = false;
+  curPlaylist = pl; plRows = [];
+  $("bListTitle").textContent = pl.name; $("bBack").hidden = false; $("bPlayAll").hidden = false; $("bSortRow").hidden = false;
   listMsg("Lädt ...");
   try {
-    let url = "/playlists/" + pl.id + "/items?limit=100", rows = [];
-    for (let i = 0; url && i < 5; i++) {
+    // alle Seiten laden (je 50 Eintraege), bis Spotify keine weitere Seite mehr meldet
+    let url = "/playlists/" + pl.id + "/items?limit=50", rows = [];
+    for (let i = 0; url && i < 100; i++) {
       const r = await SP.api(url);
       if (!r.ok) break;
       const j = await r.json();
       rows = rows.concat(j.items || []);
       url = j.next ? j.next.replace("https://api.spotify.com/v1", "") : null;
+      if (i % 4 === 3) listMsg("Lädt ... " + rows.length + " Songs");
     }
-    const ul = $("bList"); ul.textContent = "";
-    const tracks = rows.map(x => x.item || x.track).filter(t => t && t.uri && !t.is_local);
-    if (!tracks.length) { listMsg("Die Songs dieser Playlist zeigt Spotify nur dem Besitzer. Du kannst sie aber als Ganzes abspielen."); return; }
-    tracks.forEach((t, i) => {
-      const li = document.createElement("li"); li.className = "btr";
-      li.innerHTML = '<span class="bn"></span><div><b></b><span></span></div><span class="bd"></span>';
-      li.querySelector(".bn").textContent = i + 1;
-      li.querySelector("b").textContent = t.name;
-      li.querySelector("div span").textContent = (t.artists || []).map(a => a.name).join(", ");
-      li.querySelector(".bd").textContent = tfmt(t.duration_ms || 0);
-      if (bigState && bigState.item && bigState.item.uri === t.uri) li.classList.add("now");
-      li.tabIndex = 0; li.setAttribute("role", "button");
-      const go = () => spPlay({ context_uri: pl.uri, offset: { uri: t.uri } });
-      li.onclick = go; li.onkeydown = e => { if (e.key === "Enter") go(); };
-      ul.append(li);
-    });
+    plRows = rows.map((x, pos) => ({ t: x.item || x.track, added: x.added_at || "", pos })).filter(x => x.t && x.t.uri);
+    renderPlaylistRows();
   } catch { listMsg("Songs gerade nicht erreichbar."); }
 }
-$("bPlayAll").onclick = () => curPlaylist && spPlay({ context_uri: curPlaylist.uri });
+const SORTS = {
+  orig: (a, b) => a.pos - b.pos,
+  added: (a, b) => (b.added > a.added ? 1 : b.added < a.added ? -1 : b.pos - a.pos),
+  title: (a, b) => a.t.name.localeCompare(b.t.name, "de"),
+  artist: (a, b) => ((a.t.artists || [])[0] || { name: "" }).name.localeCompare(((b.t.artists || [])[0] || { name: "" }).name, "de")
+};
+function sortedRows() { const k = $("bSort").value; return plRows.slice().sort(SORTS[k] || SORTS.orig); }
+// Abspielen: in Playlist-Reihenfolge ueber die Playlist selbst, sonst als Liste in der angezeigten Reihenfolge
+function playFrom(rowsShown, idx) {
+  const sort = $("bSort").value, row = rowsShown[idx];
+  if (sort === "orig") { spPlay({ context_uri: curPlaylist.uri, offset: { position: row ? row.pos : 0 } }); return; }
+  const uris = rowsShown.slice(idx).filter(x => !x.t.is_local).slice(0, 100).map(x => x.t.uri);
+  spPlay({ uris });
+}
+function renderPlaylistRows() {
+  const ul = $("bList"); ul.textContent = "";
+  if (!plRows.length) { listMsg("Die Songs dieser Playlist zeigt Spotify nur dem Besitzer. Du kannst sie aber als Ganzes abspielen."); return; }
+  $("bListTitle").textContent = curPlaylist.name + " · " + plRows.length + " Songs";
+  const rows = sortedRows(), showAdded = $("bSort").value === "added";
+  rows.forEach((x, i) => {
+    const t = x.t;
+    const li = document.createElement("li"); li.className = "btr" + (t.is_local ? " local" : "");
+    li.innerHTML = '<span class="bn"></span><div><b></b><span></span></div><span class="bd"></span>';
+    li.querySelector(".bn").textContent = i + 1;
+    li.querySelector("b").textContent = t.name;
+    const by = (t.artists || []).map(a => a.name).join(", ") || (t.show ? t.show.name : "");
+    li.querySelector("div span").textContent = by + (showAdded && x.added ? " · hinzugefügt " + fmtD(new Date(x.added)) : "") + (t.is_local ? " · lokale Datei" : "");
+    li.querySelector(".bd").textContent = tfmt(t.duration_ms || 0);
+    if (bigState && bigState.item && bigState.item.uri === t.uri) li.classList.add("now");
+    li.tabIndex = 0; li.setAttribute("role", "button");
+    const go = () => { if (!t.is_local) playFrom(rows, i); };
+    li.onclick = go; li.onkeydown = e => { if (e.key === "Enter") go(); };
+    ul.append(li);
+  });
+}
+$("bSort").value = store.get("plSort", "orig");
+$("bSort").onchange = () => { store.set("plSort", $("bSort").value); if (plRows.length) renderPlaylistRows(); };
+$("bPlayAll").onclick = () => { if (!curPlaylist) return; if (plRows.length && $("bSort").value !== "orig") playFrom(sortedRows(), 0); else spPlay({ context_uri: curPlaylist.uri }); };
 $("bBack").onclick = showPlaylists;
 $("bClose").onclick = () => $("spDialog").close();
 $("spDialog").addEventListener("close", () => { clearInterval(bigTick); bigTick = null; });

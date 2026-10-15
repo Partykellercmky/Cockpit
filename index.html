@@ -179,7 +179,15 @@
         <h2 id="bListTitle">Deine Playlists</h2>
         <button class="btn" id="bClose" type="button">Schließen</button>
       </div>
-      <button class="btn primary wide" id="bPlayAll" type="button" hidden>Ganze Playlist abspielen</button>
+      <div class="trow bsort" id="bSortRow" hidden>
+        <select id="bSort" aria-label="Sortierung">
+          <option value="orig">Reihenfolge der Playlist</option>
+          <option value="added">Zuletzt hinzugefügt</option>
+          <option value="title">Titel A–Z</option>
+          <option value="artist">Künstler A–Z</option>
+        </select>
+        <button class="btn primary" id="bPlayAll" type="button" hidden>Ganze Playlist abspielen</button>
+      </div>
       <ul class="bl" id="bList"></ul>
     </div>
   </div>
