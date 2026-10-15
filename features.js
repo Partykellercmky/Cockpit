@@ -408,7 +408,9 @@ function renderMacStats(j) {
   wk.innerHTML = "<span>Schnitt 7 Tage</span><b></b>"; wk.querySelector("b").textContent = dur(totals.reduce((a, b) => a + b, 0) / 7);
   box.append(head, wk);
   const ul = document.createElement("ul"); ul.className = "macapps";
-  const top = today.apps.slice(0, big ? 15 : 6), max = top[0] ? top[0].duration : 1;
+  // Systemfenster und Kleinstzeiten (unter 1 Minute) ausblenden
+  const hide = /^(universalAccessAuthWarn|loginwindow|UserNotificationCenter|ScreenSaverEngine|Dock)$/;
+  const top = today.apps.filter(e => e.duration >= 60 && !hide.test(e.data.app || "")).slice(0, big ? 15 : 6), max = top[0] ? top[0].duration : 1;
   if (!top.length) ul.innerHTML = '<li class="empty">Heute noch nichts erfasst.</li>';
   top.forEach(e => {
     const li = document.createElement("li");
