@@ -271,23 +271,55 @@ function bigProgress() {
   $("bBar").style.width = (pos / c.item.duration_ms * 100).toFixed(2) + "%";
   $("bPos").textContent = tfmt(pos);
 }
-// Spielt ab; ohne aktives Geraet wird das erste verfuegbare genommen
+// Geraet zum Abspielen waehlen: aktives Geraet, sonst bevorzugt der Mac (Computer), sonst das erste
+async function spPickDevice() {
+  const d = await SP.api("/me/player/devices").then(x => x.ok ? x.json() : { devices: [] }).catch(() => ({ devices: [] }));
+  const list = (d.devices || []).filter(x => x.id && !x.is_restricted);
+  return list.find(x => x.is_active) || list.find(x => x.type === "Computer") || list[0] || null;
+}
+const spErr = async r => { try { const j = await r.json(); return (j.error && (j.error.reason || j.error.message)) || ""; } catch { return ""; } };
+// Spielt ab, immer gezielt auf einem Geraet, und prueft danach, ob wirklich etwas laeuft
 async function spPlay(body) {
-  let r = await SP.api("/me/player/play", { method: "PUT", headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
-  if (r.status === 404) {
-    const d = await SP.api("/me/player/devices").then(x => x.ok ? x.json() : { devices: [] });
-    const dev = d.devices[0];
-    if (!dev) { $("bMsg").textContent = "Kein Spotify-Gerät gefunden. Öffne Spotify auf dem Mac oder Handy."; return; }
-    r = await SP.api("/me/player/play?device_id=" + encodeURIComponent(dev.id), { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) });
+  const msg = t => { $("bMsg").textContent = t; };
+  msg("Starte ...");
+  try {
+    const dev = await spPickDevice();
+    if (!dev) { msg("Kein Spotify-Gerät gefunden. Öffne die Spotify-App auf dem Mac und versuche es nochmal."); return; }
+    // Geraet aufwecken bzw. Wiedergabe dorthin holen, falls es nicht schon aktiv ist
+    if (!dev.is_active) {
+      await SP.api("/me/player", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ device_ids: [dev.id], play: false }) });
+      await new Promise(ok => setTimeout(ok, 600));
+    }
+    const r = await SP.api("/me/player/play?device_id=" + encodeURIComponent(dev.id), { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) });
+    if (!(r.ok || r.status === 204)) {
+      const why = await spErr(r);
+      msg(r.status === 429 ? "Spotify bremst gerade, bitte kurz warten."
+        : why === "PREMIUM_REQUIRED" ? "Steuern geht nur mit Spotify Premium."
+        : "Abspielen nicht möglich (" + r.status + (why ? ", " + why : "") + ").");
+      return;
+    }
+    SP.startedAt = Date.now(); SP.pauseUntil = 0;
+    msg("Spielt auf " + dev.name + " ...");
+    setTimeout(() => loadSpotify(true), 800);
+    // Nach 6 Sekunden pruefen, ob Spotify wirklich spielt
+    setTimeout(async () => {
+      try {
+        const c = await SP.api("/me/player");
+        const j = c.status === 200 ? await c.json() : null;
+        if (j && j.is_playing && j.item) { msg(""); renderSpotify(j); if ($("spDialog").open) renderBig(j); }
+        else msg("Spotify hat den Befehl angenommen, aber auf „" + dev.name + "“ startet nichts. Öffne die Spotify-App auf dem Mac und versuche es nochmal.");
+      } catch {}
+    }, 6000);
+  } catch (e) {
+    msg(String(e.message) === "auth" ? "Verbindung abgelaufen. Bitte unter Einstellungen neu verbinden." : "Spotify nicht erreichbar (" + e.message + ").");
   }
-  const ok = r.ok || r.status === 204;
-  $("bMsg").textContent = ok ? "" : r.status === 429 ? "Spotify bremst gerade, bitte kurz warten." : "Abspielen nicht möglich (" + r.status + ").";
-  if (ok) { SP.startedAt = Date.now(); SP.pauseUntil = 0; }
-  setTimeout(() => loadSpotify(true), 800);
 }
 async function spCmd(method, path) {
-  const r = await SP.api(path, { method });
+  let r;
+  try { r = await SP.api(path, { method }); } catch (e) { $("bMsg").textContent = "Spotify nicht erreichbar (" + e.message + ")."; return; }
   if (r.status === 404) $("bMsg").textContent = "Kein aktives Gerät. Starte zuerst eine Playlist.";
+  else if (!(r.ok || r.status === 204)) $("bMsg").textContent = "Befehl nicht möglich (" + r.status + ").";
+  else $("bMsg").textContent = "";
   setTimeout(() => loadSpotify(true), 400);
 }
 $("bPlay").onclick = () => bigState && bigState.is_playing ? spCmd("PUT", "/me/player/pause") : spPlay();
