@@ -236,3 +236,5 @@ input[type=date]{background:var(--bg);border:1px solid var(--line);border-radius
 .btr.now b{color:var(--accent)}
 @media (max-width:820px){.spbig{grid-template-columns:1fr;overflow:auto}.spleft{border-right:0;border-bottom:1px solid var(--line)}.spleft img{max-width:220px}}
 a.btn{display:inline-block;text-decoration:none}
+.btn.small{padding:3px 9px;font:500 .72rem var(--sans);letter-spacing:0;text-transform:none;color:var(--text);margin-left:6px}
+.spnow{cursor:pointer}

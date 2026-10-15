@@ -199,6 +199,7 @@ function renderSpotify(cur) {
     now.innerHTML = '<p class="empty">Gerade läuft nichts.</p>';
     $("spHint").textContent = "";
   }
+  now.title = "Groß öffnen"; now.onclick = () => $("spBig").click();
   box.append(now);
   const ctl = document.createElement("div"); ctl.className = "trow spctl";
   const playing = cur && cur.is_playing;
