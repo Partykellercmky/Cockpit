@@ -240,3 +240,15 @@ a.btn{display:inline-block;text-decoration:none}
 .spnow{cursor:pointer}
 .bsort{margin:0 0 10px}
 .btr.local{opacity:.45;cursor:default}
+
+/* Kacheln gross */
+.card h2 .tools{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.growbtn{opacity:.55}
+.card:hover .growbtn,.growbtn:focus-visible,.card.expanded .growbtn{opacity:1}
+.growshade{display:none}
+body.has-expanded .growshade{display:block;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40}
+body.has-expanded{overflow:hidden}
+.card.expanded{position:fixed;z-index:50;inset:32px;margin:auto;width:min(980px,calc(100vw - 64px));height:fit-content;max-height:calc(100vh - 64px);overflow:auto;padding:26px 30px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.card.expanded > *:not(h2){zoom:1.25}
+.card.expanded h2{font-size:.8rem}
+@media (max-width:680px){.card.expanded{inset:12px;width:auto;padding:18px}.card.expanded > *:not(h2){zoom:1.1}}

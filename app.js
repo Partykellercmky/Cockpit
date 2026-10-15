@@ -190,7 +190,7 @@ async function loadCalendar() {
     if (!evs.length) { box.innerHTML = '<p class="empty">Keine Termine in den nächsten Tagen.</p>'; return; }
     let cur = "";
     const today = sod(new Date());
-    for (const e of evs.slice(0, 14)) {
+    for (const e of evs.slice(0, document.querySelector(".card.expanded #calendar") ? 80 : 14)) {
       const day = e.start < today ? today : sod(e.start), key = ymd(day);
       if (key !== cur) {
         cur = key; const n = daysUntil(day);

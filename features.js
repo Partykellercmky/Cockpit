@@ -382,8 +382,38 @@ $("spBig").onclick = () => {
   bigTick = setInterval(() => { bigProgress(); }, 500);
 };
 
+/* ---------- Kacheln gross anzeigen ---------- */
+let expandedCard = null;
+function closeExpanded() {
+  if (!expandedCard) return;
+  const c = expandedCard; expandedCard = null;
+  c.classList.remove("expanded"); document.body.classList.remove("has-expanded");
+  const b = c.querySelector(".growbtn"); if (b) { b.textContent = "Groß"; b.focus(); }
+  if (c.querySelector("#calendar")) loadCalendar();
+}
+function setupGrow() {
+  document.querySelectorAll(".grid .card").forEach(card => {
+    const h = card.querySelector("h2"); if (!h || card.querySelector("#spotify")) return;
+    // Rechte Seite der Ueberschrift: vorhandene Hinweise plus Gross-Knopf
+    const tools = document.createElement("span"); tools.className = "tools";
+    [...h.children].forEach(ch => tools.append(ch));
+    const b = document.createElement("button"); b.type = "button"; b.className = "btn small growbtn"; b.textContent = "Groß";
+    b.onclick = () => {
+      if (expandedCard === card) { closeExpanded(); return; }
+      closeExpanded();
+      expandedCard = card; card.classList.add("expanded"); document.body.classList.add("has-expanded");
+      b.textContent = "Schließen";
+      if (card.querySelector("#calendar")) loadCalendar();
+    };
+    tools.append(b); h.append(tools);
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && expandedCard) closeExpanded(); });
+  $("growShade").onclick = closeExpanded;
+}
+
 /* ---------- Start der Zusatzmodule ---------- */
 function initFeatures() {
+  setupGrow();
   renderPlan(); renderGrades(); loadSeries(); loadSpotify(true);
   setInterval(() => loadSpotify(false), 5000);
   setInterval(() => { if ($("spDialog").open) loadSpotify(true); }, 2500);
