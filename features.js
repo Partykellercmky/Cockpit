@@ -332,11 +332,19 @@ const SORTS = {
 };
 function sortedRows() { const k = $("bSort").value; return plRows.slice().sort(SORTS[k] || SORTS.orig); }
 // Abspielen: in Playlist-Reihenfolge ueber die Playlist selbst, sonst als Liste in der angezeigten Reihenfolge
-function playFrom(rowsShown, idx) {
+async function playFrom(rowsShown, idx) {
+  // Bei Zufallswiedergabe ignoriert Spotify den angeklickten Song. Darum Zufall kurz aus,
+  // Song starten und danach Zufall wieder an (der gewaehlte Song laeuft dann weiter).
+  const wasShuffle = !!(bigState && bigState.shuffle_state);
+  if (wasShuffle) { try { await SP.api("/me/player/shuffle?state=false", { method: "PUT" }); } catch {} }
+  await playFromNow(rowsShown, idx);
+  if (wasShuffle) setTimeout(() => SP.api("/me/player/shuffle?state=true", { method: "PUT" }).catch(() => {}), 1200);
+}
+async function playFromNow(rowsShown, idx) {
   const sort = $("bSort").value, row = rowsShown[idx];
-  if (sort === "orig") { spPlay({ context_uri: curPlaylist.uri, offset: { position: row ? row.pos : 0 } }); return; }
+  if (sort === "orig") { await spPlay({ context_uri: curPlaylist.uri, offset: { position: row ? row.pos : 0 } }); return; }
   const uris = rowsShown.slice(idx).filter(x => !x.t.is_local).slice(0, 100).map(x => x.t.uri);
-  spPlay({ uris });
+  await spPlay({ uris });
 }
 function renderPlaylistRows() {
   const ul = $("bList"); ul.textContent = "";
