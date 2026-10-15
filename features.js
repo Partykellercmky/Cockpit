@@ -312,8 +312,9 @@ async function spPlay(body, ...fallbacks) {
       msg("Spielt auf " + dev.name + " ...");
       const j = await spWaitPlaying();
       if (j) {
-        if (tries[k].note) store.set("spDirect", k > 0); // merken, welcher Weg auf diesem Mac klappt
-        msg(k > 0 && tries[k].note ? tries[k].note : "");
+        if ("direct" in tries[k]) store.set("spDirect", tries[k].direct); // merken, welcher Weg auf diesem Mac klappt
+        msg(tries[k].direct && !store.get("plSortNoteSeen", false) ? tries[k].note : "");
+        if (tries[k].direct) store.set("plSortNoteSeen", true);
         renderSpotify(j); if ($("spDialog").open) renderBig(j);
         return;
       }
@@ -407,7 +408,8 @@ async function playFromNow(rowsShown, idx) {
   // Ausweichplan: gewaehlten Song direkt aus der Playlist starten (danach geht es in Playlist-Reihenfolge weiter)
   const fb = row ? { context_uri: curPlaylist.uri, offset: { uri: row.t.uri } } : { context_uri: curPlaylist.uri };
   Object.defineProperty(fb, "note", { value: "Läuft aus der Playlist. Danach geht es in Playlist-Reihenfolge weiter.", enumerable: false });
-  const list = { uris }; Object.defineProperty(list, "note", { value: "", enumerable: false });
+  Object.defineProperty(fb, "direct", { value: true, enumerable: false });
+  const list = { uris }; Object.defineProperty(list, "direct", { value: false, enumerable: false });
   // Hat beim letzten Mal nur der direkte Start aus der Playlist geklappt, gleich diesen nehmen (geht schneller)
   if (store.get("spDirect", false)) await spPlay(fb, list); else await spPlay(list, fb);
 }
