@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="style.css?v=13">
+<link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
 <main class="wrap">
@@ -29,31 +29,40 @@
     </div>
   </header>
 
-  <div class="grid">
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Bereiche">
+    <button type="button" role="tab" data-tab="heute">Heute</button>
+    <button type="button" role="tab" data-tab="schule">Schule</button>
+    <button type="button" role="tab" data-tab="privat">Privat</button>
+    <button type="button" role="tab" data-tab="alle">Alle</button>
+  </nav>
+
+  <div class="today" id="todayBar" aria-label="Heute auf einen Blick"></div>
+
+  <div class="grid" id="grid">
 
     <div class="col">
-      <section class="card">
+      <section class="card" data-id="countdowns">
         <h2>Countdowns</h2>
         <ul class="cd" id="countdowns"></ul>
       </section>
 
-      <section class="card">
+      <section class="card" data-id="lernplan">
         <h2>Lernplan <span class="hint">Stunden aus dem Lern-Timer</span></h2>
         <ul class="plan" id="plan"></ul>
       </section>
 
-      <section class="card">
+      <section class="card" data-id="ausbildung">
         <h2>Ausbildung</h2>
         <dl class="kv">
           <dt>Einsatz</dt><dd id="deptName">--</dd>
-          <dt>Fortschritt</dt><dd><div class="bar"><i id="deptBar"></i></div><span class="sub" id="deptMeta">--</span></dd>
+          <dt>Fortschritt</dt><dd class="ringrow"><span id="deptRing"></span><span class="sub" id="deptMeta">--</span></dd>
           <dt>Danach</dt><dd id="deptNext">--</dd>
           <dt>Schule</dt><dd id="school">--</dd>
           <dt>Nächste Prüfung</dt><dd id="nextExam">--</dd>
         </dl>
       </section>
 
-      <section class="card">
+      <section class="card" data-id="noten">
         <h2>Noten <span class="hint" id="gradeGoal"></span></h2>
         <p class="savebig"><b id="gradeAvg">--</b> <span class="sub" id="gradeMeta">Noch keine Noten</span></p>
         <ul class="bysub" id="gradeBySub"></ul>
@@ -68,12 +77,12 @@
     </div>
 
     <div class="col">
-      <section class="card">
+      <section class="card" data-id="termine">
         <h2>Termine <span class="hint" id="calHint"></span></h2>
         <div id="calendar"></div>
       </section>
 
-      <section class="card">
+      <section class="card" data-id="aufgaben">
         <h2>Aufgaben <button class="link" id="clearDone" type="button">Erledigte entfernen</button></h2>
         <ul class="tasks" id="tasks"></ul>
         <form class="addrow" id="taskForm">
@@ -82,12 +91,12 @@
         </form>
       </section>
 
-      <section class="card">
+      <section class="card" data-id="notiz">
         <h2>Schnellnotiz <span class="hint" id="noteHint"></span></h2>
         <textarea id="note" rows="6" placeholder="Gedanken, Nummern, Ideen ..." aria-label="Schnellnotiz"></textarea>
       </section>
 
-      <section class="card">
+      <section class="card" data-id="serien">
         <h2>Serien <span class="hint">nächste Folgen</span></h2>
         <ul class="series" id="series"></ul>
         <form class="addrow" id="seriesForm">
@@ -96,24 +105,24 @@
         </form>
       </section>
 
-      <section class="card">
+      <section class="card" data-id="mac">
         <h2>Mac-Nutzung <span class="hint" id="macHint"></span></h2>
         <div id="macStats"></div>
       </section>
     </div>
 
     <div class="col">
-      <section class="card">
+      <section class="card" data-id="spotify">
         <h2>Spotify <span class="hint"><span id="spHint"></span> <button class="btn small" id="spBig" type="button">Groß öffnen</button></span></h2>
         <div id="spotify"></div>
       </section>
 
-      <section class="card">
+      <section class="card" data-id="wetter">
         <h2>Wetter <span class="hint" id="wxPlace"></span></h2>
         <div class="wxdays" id="wxdays"></div>
       </section>
 
-      <section class="card">
+      <section class="card" data-id="timer">
         <h2>Lern-Timer</h2>
         <div class="timer">
           <p class="ttime" id="tTime">25:00</p>
@@ -140,7 +149,7 @@
         </div>
       </section>
 
-      <section class="card">
+      <section class="card" data-id="sparziele">
         <h2>Sparziele <span class="hint" id="saveTitle"></span></h2>
         <ul class="goals" id="goals"></ul>
         <button class="btn wide" id="newGoalBtn" type="button">Neues Sparziel</button>
@@ -163,6 +172,7 @@
   </footer>
 </main>
 
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
 <div class="growshade" id="growShade"></div>
 
 <dialog id="spDialog" class="spdlg" aria-label="Spotify">
@@ -224,7 +234,8 @@
   </form>
 </dialog>
 
-<script src="app.js?v=13"></script>
-<script src="features.js?v=13"></script>
+<script src="app.js?v=14"></script>
+<script src="features.js?v=14"></script>
+<script src="layout.js?v=14"></script>
 </body>
 </html>

@@ -5,6 +5,14 @@
 const $ = id => document.getElementById(id);
 const DAY = 86400000;
 const pad = n => String(n).padStart(2, "0");
+// Fortschrittsring als SVG (pct 0-100)
+function ring(pct, size, text, cls) {
+  const v = Math.max(0, Math.min(100, pct || 0));
+  return '<svg class="ring ' + (cls || "") + '" width="' + size + '" height="' + size + '" viewBox="0 0 100 100" aria-hidden="true">' +
+    '<circle class="rt" cx="50" cy="50" r="43"/>' +
+    '<circle class="rv" cx="50" cy="50" r="43" pathLength="100" stroke-dasharray="' + v.toFixed(2) + ' 100" transform="rotate(-90 50 50)"/>' +
+    (text != null ? '<text x="50" y="50" dominant-baseline="central" text-anchor="middle">' + text + "</text>" : "") + "</svg>";
+}
 const WD = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
 const WD_LONG = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
 const MON = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
@@ -60,7 +68,7 @@ function greeting(h) { return h < 5 ? "Gute Nacht" : h < 11 ? "Guten Morgen" : h
 let lastDay = "";
 function tick() {
   const now = new Date();
-  $("clock").innerHTML = pad(now.getHours()) + ":" + pad(now.getMinutes()) + '<span class="sec">' + pad(now.getSeconds()) + "</span>";
+  $("clock").innerHTML = pad(now.getHours()) + ":" + pad(now.getMinutes()) + '<span class="secring">' + ring(now.getSeconds() / 60 * 100, 54, pad(now.getSeconds()), "sec") + "</span>";
   $("date").textContent = WD_LONG[now.getDay()] + ", " + now.getDate() + ". " + MON[now.getMonth()] + " " + now.getFullYear();
   $("greet").textContent = greeting(now.getHours()) + (DATA ? ", " + DATA.name : "");
   const st = dayStatus(now);
@@ -93,7 +101,7 @@ function renderDept() {
   const e = DATA.einsatz, s = new Date(e.start + "T00:00"), en = new Date(e.ende + "T23:59");
   const p = Math.min(1, Math.max(0, (Date.now() - s) / (en - s)));
   $("deptName").textContent = e.abteilung;
-  $("deptBar").style.width = (p * 100).toFixed(1) + "%";
+  $("deptRing").innerHTML = ring(p * 100, 64, Math.round(p * 100) + "%");
   const left = daysUntil(en);
   $("deptMeta").textContent = fmtD(s) + " bis " + fmtD(en) + " · " + (left > 0 ? "noch " + left + " Tage" : "beendet");
   $("deptNext").textContent = e.danach || "--";
@@ -186,6 +194,7 @@ async function loadCalendar() {
     const raw = await r.json(); const evs = (Array.isArray(raw) ? raw : raw.events || [])
       .map(e => ({ title: e.title || e.summary || "(ohne Titel)", start: new Date(e.start), end: new Date(e.end || e.start), allDay: !!e.allDay, cal: e.cal || "" }))
       .filter(e => e.end >= sod(new Date())).sort((a, b) => a.start - b.start);
+    window.calEvents = evs; if (typeof renderToday === "function") renderToday();
     box.textContent = "";
     if (!evs.length) { box.innerHTML = '<p class="empty">Keine Termine in den nächsten Tagen.</p>'; return; }
     let cur = "";
@@ -326,12 +335,12 @@ function renderSaving() {
   if (!goals.length) { ul.innerHTML = '<li class="empty">Noch kein Sparziel. Leg unten eins an.</li>'; return; }
   for (const g of goals) {
     const li = document.createElement("li"); li.className = "goal";
-    li.innerHTML = '<div class="pt"><span class="pn"></span><span class="pv"></span><button class="x" type="button" aria-label="Sparziel löschen">×</button></div>' +
-      '<div class="bar"><i></i></div><p class="sub gm"></p>' +
+    li.innerHTML = '<div class="gring"></div><div class="gbody"><div class="pt"><span class="pn"></span><span class="pv"></span><button class="x" type="button" aria-label="Sparziel löschen">×</button></div>' +
+      '<p class="sub gm"></p></div>' +
       '<form class="addrow"><input type="number" inputmode="decimal" step="0.01" placeholder="Betrag"><button class="btn" type="submit">Einzahlen</button><button class="btn st" type="button">Stand setzen</button></form>';
     li.querySelector(".pn").textContent = g.titel;
     li.querySelector(".pv").textContent = euro(g.stand) + " von " + euro(g.ziel);
-    li.querySelector(".bar i").style.width = Math.min(100, g.stand / g.ziel * 100).toFixed(1) + "%";
+    li.querySelector(".gring").innerHTML = ring(g.stand / g.ziel * 100, 58, Math.min(100, Math.round(g.stand / g.ziel * 100)) + "%", g.stand >= g.ziel ? "done" : "");
     const rest = Math.max(0, g.ziel - g.stand);
     let meta;
     if (rest <= 0) meta = "Ziel erreicht.";

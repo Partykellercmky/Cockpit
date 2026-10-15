@@ -1,6 +1,6 @@
 // Cockpit Service Worker: App-Huelle offline verfuegbar, data.json immer frisch vom Netz.
-const CACHE = "cockpit-v13";
-const SHELL = ["./", "index.html", "style.css", "app.js", "features.js", "data.json", "manifest.webmanifest", "icon-192.png", "apple-touch-icon.png"];
+const CACHE = "cockpit-v14";
+const SHELL = ["./", "index.html", "style.css", "app.js", "features.js", "layout.js", "data.json", "manifest.webmanifest", "icon-192.png", "apple-touch-icon.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))));

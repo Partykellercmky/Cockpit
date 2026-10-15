@@ -9,7 +9,7 @@ function renderPlan() {
   const list = DATA.countdowns.filter(c => c.fach && c.lernziel && daysUntil(new Date(c.datum)) >= 0)
     .sort((a, b) => new Date(a.datum) - new Date(b.datum));
   if (!list.length) { ul.innerHTML = '<li class="empty">Keine Prüfung mit Lernziel geplant.</li>'; return; }
-  const fmt = m => m >= 60 ? Math.floor(m / 60) + " h " + pad(Math.round(m % 60)) : Math.round(m) + " min";
+  const fmt = x => { const m = Math.round(x); return m >= 60 ? Math.floor(m / 60) + " h " + pad(m % 60) : m + " min"; };
   for (const c of list) {
     const exam = new Date(c.datum);
     const start = c.lernstart ? new Date(c.lernstart + "T00:00") : new Date(sod(exam).getTime() - 28 * DAY);
@@ -25,11 +25,11 @@ function renderPlan() {
     else state = fmt(should - done) + " Rückstand";
     const li = document.createElement("li");
     li.className = done < should - 15 && started && done < goalH * 60 ? "behind" : "";
-    li.innerHTML = '<div class="pt"><span class="pn"></span><span class="pv"></span></div><div class="bar"><i></i></div>' +
-      '<div class="pm"><span class="ps"></span><label class="pg">Ziel <input type="number" min="1" max="200" step="1"> h</label></div>';
+    li.innerHTML = '<div class="gring"></div><div class="gbody"><div class="pt"><span class="pn"></span><span class="pv"></span></div>' +
+      '<div class="pm"><span class="ps"></span><label class="pg">Ziel <input type="number" min="1" max="200" step="1"> h</label></div></div>';
     li.querySelector(".pn").textContent = c.titel;
     li.querySelector(".pv").textContent = fmt(done) + " von " + goalH + " h";
-    li.querySelector(".bar i").style.width = pct.toFixed(1) + "%";
+    li.querySelector(".gring").innerHTML = ring(pct, 52, Math.round(pct) + "%", li.className.includes("behind") ? "warn" : pct >= 100 ? "done" : "");
     li.querySelector(".ps").textContent = state + " · noch " + daysUntil(exam) + " Tage · Fach " + c.fach;
     const inp = li.querySelector("input"); inp.value = goalH; inp.setAttribute("aria-label", "Lernziel " + c.titel);
     inp.onchange = () => { const v = parseFloat(inp.value); if (v > 0) { goals[c.titel] = v; store.set("planGoals", goals); renderPlan(); } };
@@ -182,6 +182,7 @@ async function loadSpotify(force) {
   }
 }
 function renderSpotify(cur) {
+  window.spCur = cur; if (typeof renderToday === "function") renderToday();
   const box = $("spotify"); box.textContent = "";
   const item = cur && cur.item;
   const now = document.createElement("div"); now.className = "spnow";
@@ -438,7 +439,7 @@ function closeExpanded() {
   if (c.querySelector("#macStats")) loadMacStats();
 }
 function setupGrow() {
-  document.querySelectorAll(".grid .card").forEach(card => {
+  document.querySelectorAll(".card[data-id]").forEach(card => {
     const h = card.querySelector("h2"); if (!h || card.querySelector("#spotify")) return;
     // Rechte Seite der Ueberschrift: vorhandene Hinweise plus Gross-Knopf
     const tools = document.createElement("span"); tools.className = "tools";

@@ -260,3 +260,58 @@ body.has-expanded{overflow:hidden}
 .macapps .an{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .macapps .ad{font:.8rem var(--mono);color:var(--muted)}
 .macapps .bar{grid-column:1/-1;margin:0;height:4px}
+
+/* ===== Look: Lichtverlauf, Glas, Tabs, Heute-Leiste, Ringe ===== */
+:root{--glass:rgba(22,26,31,.62);--glass-line:rgba(255,255,255,.07)}
+body{background:transparent}
+.aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.aurora i{position:absolute;width:60vmax;height:60vmax;border-radius:50%;filter:blur(90px);opacity:.22;will-change:transform}
+.aurora i:nth-child(1){background:#2f7d8f;top:-25vmax;left:-15vmax;animation:drift1 48s ease-in-out infinite alternate}
+.aurora i:nth-child(2){background:#3b3f8f;bottom:-30vmax;right:-20vmax;animation:drift2 60s ease-in-out infinite alternate}
+.aurora i:nth-child(3){background:#1f5d4f;top:30%;left:45%;width:40vmax;height:40vmax;opacity:.14;animation:drift3 70s ease-in-out infinite alternate}
+@keyframes drift1{to{transform:translate(18vmax,12vmax) scale(1.1)}}
+@keyframes drift2{to{transform:translate(-16vmax,-10vmax) scale(.95)}}
+@keyframes drift3{to{transform:translate(-22vmax,8vmax) scale(1.15)}}
+@media (prefers-reduced-motion:reduce){.aurora i{animation:none}}
+.card{background:var(--glass);border-color:var(--glass-line);-webkit-backdrop-filter:blur(18px) saturate(1.2);backdrop-filter:blur(18px) saturate(1.2);border-radius:14px}
+.card.expanded{background:rgba(22,26,31,.92)}
+.head{border-bottom-color:var(--glass-line)}
+
+/* Uhr mit Sekunden-Ring */
+.clock{display:flex;align-items:center;gap:14px}
+.secring{display:inline-flex}
+.ring{display:block;flex:none}
+.ring .rt{fill:none;stroke:rgba(255,255,255,.08);stroke-width:7}
+.ring .rv{fill:none;stroke:var(--accent);stroke-width:7;stroke-linecap:round;transition:stroke-dasharray .6s ease}
+.ring text{fill:var(--text);font:500 22px var(--mono)}
+.ring.sec .rv{transition:stroke-dasharray .9s linear;stroke-width:6}
+.ring.sec text{fill:var(--muted);font-size:30px}
+.ring.warn .rv{stroke:var(--warn)}
+.ring.done .rv{stroke:var(--ok)}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin:-6px 0 14px;padding:4px;background:var(--glass);border:1px solid var(--glass-line);border-radius:12px;width:fit-content;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.tabs button{background:none;border:0;color:var(--muted);font:500 .88rem var(--sans);padding:7px 16px;border-radius:9px;cursor:pointer}
+.tabs button:hover{color:var(--text)}
+.tabs button.on{background:rgba(141,182,198,.16);color:var(--text)}
+.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+/* Heute-Leiste */
+.today{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.today:empty{display:none}
+.chip{display:grid;gap:2px;text-align:left;background:var(--glass);border:1px solid var(--glass-line);border-radius:12px;padding:9px 14px;color:var(--text);cursor:pointer;max-width:340px;min-width:0;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.chip:hover{border-color:rgba(255,255,255,.16)}
+.chip span{font:500 .64rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.chip b{font-weight:500;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip.hot b{color:var(--warn)}
+.chip.crit b{color:var(--crit)}
+.chip.ok b{color:var(--ok)}
+.chip.music b{color:var(--accent)}
+
+/* Ringe in Ausbildung, Lernplan, Sparziele */
+.ringrow{display:flex;align-items:center;gap:12px}
+.plan li,.goal{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;align-items:center}
+.gbody{min-width:0}
+.goal form{grid-column:1/-1}
+.plan li .bar,.goal .bar{display:none}
+@media (max-width:680px){.tabs{width:100%}.tabs button{flex:1;padding:7px 6px}.clock .ring{width:40px;height:40px}}
