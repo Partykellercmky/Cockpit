@@ -2,6 +2,7 @@
 // Holt den privaten Google-Kalender (iCal-Adresse) und liefert die Termine
 // der naechsten 14 Tage als JSON an die Cockpit-App.
 // Benoetigte Secrets: GCAL_ICS_URL (geheime iCal-Adresse), COCKPIT_TOKEN (Schluessel der App)
+// Optional: GCAL_ICS_URL_GEBURTSTAGE (zweiter Kalender, Termine bekommen cal="geburtstage")
 
 const TZ = "Europe/Berlin";
 const DAYS_AHEAD = 14;
@@ -13,7 +14,7 @@ const cors = {
   "Access-Control-Allow-Headers": "authorization, apikey, content-type",
 };
 
-type Ev = { title: string; start: string; end: string; allDay: boolean };
+type Ev = { title: string; start: string; end: string; allDay: boolean; cal?: string };
 
 /* ---------- Zeit-Hilfen ---------- */
 // Wandelt eine Berliner Ortszeit in einen echten Zeitpunkt um
@@ -191,11 +192,16 @@ Deno.serve(async req => {
     if (!token || url.searchParams.get("token") !== token)
       return new Response(JSON.stringify({ error: "Kein Zugriff" }), { status: 401, headers: { ...cors, "Content-Type": "application/json" } });
     try {
-      const r = await fetch(Deno.env.get("GCAL_ICS_URL") || "");
-      if (!r.ok) throw new Error("Kalender " + r.status);
       const now = new Date(), p = parts(now);
       const from = zoned(p.y, p.mo, p.d), to = new Date(from.getTime() + DAYS_AHEAD * DAY);
-      const events = buildEvents(await r.text(), from, to);
+      const sources = [["privat", Deno.env.get("GCAL_ICS_URL")], ["geburtstage", Deno.env.get("GCAL_ICS_URL_GEBURTSTAGE")]]
+        .filter(([, u]) => u) as [string, string][];
+      const lists = await Promise.all(sources.map(async ([cal, u]) => {
+        const r = await fetch(u);
+        if (!r.ok) { if (cal === "privat") throw new Error("Kalender " + r.status); return []; }
+        return buildEvents(await r.text(), from, to).map(e => ({ ...e, cal }));
+      }));
+      const events = lists.flat().sort((a, b) => (a.start < b.start ? -1 : 1));
       return new Response(JSON.stringify({ events }), { headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "max-age=300" } });
     } catch (e) {
       return new Response(JSON.stringify({ error: String(e) }), { status: 502, headers: { ...cors, "Content-Type": "application/json" } });

@@ -71,6 +71,7 @@ button,input,select{font:inherit;color:inherit}
 .ev time{font:.84rem var(--mono);color:var(--accent);font-variant-numeric:tabular-nums}
 .ev span{min-width:0;overflow-wrap:anywhere}
 .ev.past{opacity:.45}
+.ev.bday time{color:var(--warn)}
 .empty{color:var(--muted);font-size:.88rem}
 
 /* Aufgaben */

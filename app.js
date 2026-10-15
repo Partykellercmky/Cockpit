@@ -144,7 +144,7 @@ async function loadCalendar() {
     if (r.status === 401) { box.innerHTML = '<p class="empty">Kalender-Schlüssel stimmt nicht. Bitte unter Einstellungen prüfen.</p>'; return; }
     if (!r.ok) throw 0;
     const raw = await r.json(); const evs = (Array.isArray(raw) ? raw : raw.events || [])
-      .map(e => ({ title: e.title || e.summary || "(ohne Titel)", start: new Date(e.start), end: new Date(e.end || e.start), allDay: !!e.allDay }))
+      .map(e => ({ title: e.title || e.summary || "(ohne Titel)", start: new Date(e.start), end: new Date(e.end || e.start), allDay: !!e.allDay, cal: e.cal || "" }))
       .filter(e => e.end >= sod(new Date())).sort((a, b) => a.start - b.start);
     box.textContent = "";
     if (!evs.length) { box.innerHTML = '<p class="empty">Keine Termine in den nächsten Tagen.</p>'; return; }
@@ -160,7 +160,8 @@ async function loadCalendar() {
       }
       const row = document.createElement("div"); row.className = "ev" + (!e.allDay && e.end < new Date() ? " past" : "");
       row.innerHTML = "<time></time><span></span>";
-      row.querySelector("time").textContent = e.allDay ? "ganzt." : pad(e.start.getHours()) + ":" + pad(e.start.getMinutes());
+      if (e.cal === "geburtstage") row.classList.add("bday");
+      row.querySelector("time").textContent = e.cal === "geburtstage" ? "Geb." : e.allDay ? "ganzt." : pad(e.start.getHours()) + ":" + pad(e.start.getMinutes());
       row.querySelector("span").textContent = e.title;
       box.append(row);
     }
