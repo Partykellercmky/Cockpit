@@ -280,8 +280,8 @@ async function spPickDevice() {
 const spErr = async r => { try { const j = await r.json(); return (j.error && (j.error.reason || j.error.message)) || ""; } catch { return ""; } };
 // Wartet bis zu 5 Sekunden, ob Spotify wirklich spielt
 async function spWaitPlaying() {
-  for (let i = 0; i < 5; i++) {
-    await new Promise(ok => setTimeout(ok, 1000));
+  for (let i = 0; i < 10; i++) {
+    await new Promise(ok => setTimeout(ok, 500));
     try {
       const c = await SP.api("/me/player");
       const j = c.status === 200 ? await c.json() : null;
@@ -312,6 +312,7 @@ async function spPlay(body, ...fallbacks) {
       msg("Spielt auf " + dev.name + " ...");
       const j = await spWaitPlaying();
       if (j) {
+        if (tries[k].note) store.set("spDirect", k > 0); // merken, welcher Weg auf diesem Mac klappt
         msg(k > 0 && tries[k].note ? tries[k].note : "");
         renderSpotify(j); if ($("spDialog").open) renderBig(j);
         return;
@@ -406,7 +407,9 @@ async function playFromNow(rowsShown, idx) {
   // Ausweichplan: gewaehlten Song direkt aus der Playlist starten (danach geht es in Playlist-Reihenfolge weiter)
   const fb = row ? { context_uri: curPlaylist.uri, offset: { uri: row.t.uri } } : { context_uri: curPlaylist.uri };
   Object.defineProperty(fb, "note", { value: "Läuft aus der Playlist. Danach geht es in Playlist-Reihenfolge weiter.", enumerable: false });
-  await spPlay({ uris }, fb);
+  const list = { uris }; Object.defineProperty(list, "note", { value: "", enumerable: false });
+  // Hat beim letzten Mal nur der direkte Start aus der Playlist geklappt, gleich diesen nehmen (geht schneller)
+  if (store.get("spDirect", false)) await spPlay(fb, list); else await spPlay(list, fb);
 }
 function renderPlaylistRows() {
   const ul = $("bList"); ul.textContent = "";
