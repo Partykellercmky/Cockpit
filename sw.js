@@ -1,5 +1,5 @@
 // Cockpit Service Worker: App-Huelle offline verfuegbar, data.json immer frisch vom Netz.
-const CACHE = "cockpit-v20";
+const CACHE = "cockpit-v21";
 const SHELL = ["./", "index.html", "style.css", "app.js", "features.js", "layout.js", "data.json", "manifest.webmanifest", "icon-192.png", "apple-touch-icon.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener("activate", e => {
@@ -14,4 +14,12 @@ self.addEventListener("fetch", e => {
   e.respondWith(fetch(e.request.url, { cache: "no-cache" }).then(r => {
     const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return r;
   }).catch(() => caches.match(e.request)));
+});
+// Klick auf die Timer-Benachrichtigung holt Cockpit nach vorn
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(cs => {
+    const c = cs.find(x => x.url.startsWith(self.registration.scope));
+    return c ? c.focus() : self.clients.openWindow("./");
+  }));
 });

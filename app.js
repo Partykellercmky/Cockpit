@@ -263,6 +263,27 @@ function beep() {
       o.connect(g); g.connect(ctx.destination); o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + .18); });
   } catch {}
 }
+// Systembenachrichtigung beim Ablauf (Erlaubnis wird beim ersten Start abgefragt)
+function askNotify() {
+  try { if ("Notification" in window && Notification.permission === "default") Notification.requestPermission(); } catch {}
+}
+async function notifyEnd(t) {
+  try {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    const title = t.brk ? "Pause vorbei" : "Lerneinheit geschafft";
+    const body = t.brk ? "Weiter geht es mit dem Lernen." : t.len + " min " + t.subject + " erledigt. Zeit für eine Pause.";
+    const opt = { body, tag: "cockpit-timer", renotify: true, icon: "icon-192.png", requireInteraction: !t.brk };
+    const reg = "serviceWorker" in navigator ? await navigator.serviceWorker.getRegistration() : null;
+    if (reg) reg.showNotification(title, opt);
+    else new Notification(title, opt);
+  } catch {}
+}
+// Zusaetzlich ein genauer Wecker auf das Ende, damit es nicht erst beim naechsten Sekundentakt auffaellt
+let endWake = null;
+function armEnd() {
+  clearTimeout(endWake);
+  if (timer && timer.pausedLeft == null) endWake = setTimeout(renderTimer, Math.max(0, timer.endAt - Date.now()) + 50);
+}
 function logSession(min, subject) {
   if (min < 1) return;
   sessions.push({ d: ymd(new Date()), min: Math.round(min), s: subject });
@@ -286,16 +307,18 @@ function finishTimer(completed) {
   if (!timer) return;
   const worked = timer.len - timerLeft() / 60000;
   if (!timer.brk) logSession(completed ? timer.len : worked, timer.subject);
-  if (completed) beep();
+  if (completed) { beep(); notifyEnd(timer); }
+  clearTimeout(endWake);
   timer = null; store.set("timer", null); renderTimer();
 }
 $("tStart").onclick = () => {
+  askNotify();
   if (!timer) {
     const len = +$("tLen").value;
     timer = { len, endAt: Date.now() + len * 60000, subject: $("tSubject").value, brk: len === 5, pausedLeft: null };
   } else if (timer.pausedLeft != null) { timer.endAt = Date.now() + timer.pausedLeft; timer.pausedLeft = null; }
   else { timer.pausedLeft = timerLeft(); }
-  store.set("timer", timer); renderTimer();
+  store.set("timer", timer); armEnd(); renderTimer();
 };
 $("tStop").onclick = () => finishTimer(false);
 $("tLen").onchange = () => { if (!timer) renderTimer(); };
@@ -413,7 +436,7 @@ async function init() {
   DATA.faecher.forEach(f => { const o = document.createElement("option"); o.textContent = f; sel.append(o); });
   sel.value = store.get("lastSubject", DATA.faecher[0]);
   if (timer) { sel.value = timer.subject; $("tLen").value = String(timer.len); }
-  renderTasks(); tick(); renderTimer();
+  renderTasks(); tick(); armEnd(); renderTimer();
   loadWeather(); loadCalendar();
   if (typeof initFeatures === "function") initFeatures();
   setInterval(() => { if (!document.hidden) tick(); }, 1000);
