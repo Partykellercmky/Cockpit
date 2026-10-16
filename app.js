@@ -339,6 +339,36 @@ $("tMin").oninput = () => { store.set("customMin", $("tMin").value); if (!timer)
 $("tKind").onchange = () => { store.set("customKind", $("tKind").value); if (!timer) renderTimer(); };
 $("tSubject").onchange = () => store.set("lastSubject", $("tSubject").value);
 
+/* ---------- Lernzeit nachtragen ---------- */
+function renderLogList() {
+  const ul = $("logList"); ul.textContent = "";
+  const extra = sessions.map((s, i) => [s, i]).filter(([s]) => s.n).slice(-5).reverse();
+  extra.forEach(([s, i]) => {
+    const li = document.createElement("li");
+    li.innerHTML = '<span></span><b></b><button class="x" type="button" aria-label="Eintrag löschen">×</button>';
+    li.querySelector("span").textContent = fmtD(new Date(s.d + "T12:00")) + " · " + s.s;
+    li.querySelector("b").textContent = s.min + " min";
+    li.querySelector(".x").onclick = () => { sessions.splice(i, 1); store.set("sessions", sessions); renderStats(); renderLogList(); if (typeof renderPlan === "function") renderPlan(); };
+    ul.append(li);
+  });
+}
+$("logBtn").onclick = () => {
+  const f = $("logForm"); f.hidden = !f.hidden;
+  if (!f.hidden) {
+    $("logDate").value = ymd(new Date()); $("logDate").max = ymd(new Date());
+    $("logSub").value = $("tSubject").value; renderLogList(); $("logMin").focus();
+  }
+};
+$("logForm").onsubmit = ev => {
+  ev.preventDefault();
+  const d = $("logDate").value, m = Math.round(+$("logMin").value);
+  if (!d || !(m >= 1 && m <= 720)) return;
+  sessions.push({ d, min: m, s: $("logSub").value, n: 1 }); // n = nachgetragen
+  store.set("sessions", sessions);
+  $("logMin").value = "";
+  renderStats(); renderLogList(); if (typeof renderPlan === "function") renderPlan();
+};
+
 function weekStart(d) { const x = sod(d), wd = (x.getDay() + 6) % 7; return new Date(x.getTime() - wd * DAY); }
 function renderStats() {
   const today = ymd(new Date()), ws = ymd(weekStart(new Date()));
@@ -448,7 +478,7 @@ async function init() {
   try { const r = await fetch("data.json", { cache: "no-cache" }); DATA = await r.json(); }
   catch { $("footInfo").textContent = "data.json konnte nicht geladen werden"; return; }
   const sel = $("tSubject");
-  DATA.faecher.forEach(f => { const o = document.createElement("option"); o.textContent = f; sel.append(o); });
+  DATA.faecher.forEach(f => { const o = document.createElement("option"); o.textContent = f; sel.append(o); $("logSub").append(o.cloneNode(true)); });
   sel.value = store.get("lastSubject", DATA.faecher[0]);
   $("tLen").value = store.get("lastLen", "25");
   $("tMin").value = store.get("customMin", "");

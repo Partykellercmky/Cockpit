@@ -155,6 +155,16 @@
           <div class="week" id="sBars"></div>
           <ul class="bysub" id="sBySub"></ul>
         </div>
+        <button class="btn wide" id="logBtn" type="button">Lernzeit nachtragen</button>
+        <form class="goalform" id="logForm" hidden>
+          <div class="trow">
+            <input id="logDate" type="date" aria-label="Datum">
+            <input id="logMin" type="number" inputmode="numeric" min="1" max="720" step="1" placeholder="Minuten" aria-label="Minuten">
+          </div>
+          <select id="logSub" aria-label="Fach"></select>
+          <button class="btn primary" type="submit">Eintragen</button>
+          <ul class="gradelist" id="logList"></ul>
+        </form>
       </section>
 
       <section class="card" data-id="sparziele">

@@ -175,6 +175,7 @@ input[type=date]{background:var(--bg);border:1px solid var(--line);border-radius
 .savebig b.good{color:var(--ok)}
 .savebig b.bad{color:var(--warn)}
 .gradelist{list-style:none;margin:10px 0 0;padding:8px 0 0;border-top:1px solid var(--line);display:grid;gap:2px}
+#logList:empty{display:none}
 .gradelist li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;font-size:.82rem;color:var(--muted)}
 .gradelist b{font:400 .85rem var(--mono);color:var(--text)}
 .gradelist .x,.series .x{background:none;border:0;color:var(--faint);cursor:pointer;padding:0 4px}
