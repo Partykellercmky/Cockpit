@@ -289,13 +289,21 @@ function logSession(min, subject) {
   sessions.push({ d: ymd(new Date()), min: Math.round(min), s: subject });
   store.set("sessions", sessions); renderStats(); if (typeof renderPlan === "function") renderPlan();
 }
+// Gewaehlte Dauer: feste Vorgaben oder eigene Minuten (Lernen oder Pause)
+function pickLen() {
+  const v = $("tLen").value;
+  if (v !== "custom") return { len: +v, brk: v === "5" };
+  const m = Math.round(+$("tMin").value);
+  return { len: m >= 1 && m <= 480 ? m : 0, brk: $("tKind").value === "pause" };
+}
+function showCustom() { $("tCustom").hidden = $("tLen").value !== "custom"; }
 function timerLeft() { if (!timer) return 0; return timer.pausedLeft != null ? timer.pausedLeft : Math.max(0, timer.endAt - Date.now()); }
 function renderTimer() {
-  const len = +$("tLen").value;
-  const left = timer ? timerLeft() : len * 60000;
-  const s = Math.ceil(left / 1000);
-  $("tTime").textContent = pad(Math.floor(s / 60)) + ":" + pad(s % 60);
-  const brk = timer ? timer.brk : len === 5;
+  const pick = pickLen();
+  const left = timer ? timerLeft() : pick.len * 60000;
+  const s = Math.ceil(left / 1000), h = Math.floor(s / 3600);
+  $("tTime").textContent = (h ? h + ":" + pad(Math.floor(s / 60) % 60) : pad(Math.floor(s / 60))) + ":" + pad(s % 60);
+  const brk = timer ? timer.brk : pick.brk;
   $("tTime").classList.toggle("brk", brk);
   if (!timer) { $("tPhase").textContent = "Bereit"; $("tStart").textContent = "Start"; }
   else if (timer.pausedLeft != null) { $("tPhase").textContent = "Pausiert · " + (brk ? "Pause" : timer.subject); $("tStart").textContent = "Weiter"; }
@@ -314,14 +322,21 @@ function finishTimer(completed) {
 $("tStart").onclick = () => {
   askNotify();
   if (!timer) {
-    const len = +$("tLen").value;
-    timer = { len, endAt: Date.now() + len * 60000, subject: $("tSubject").value, brk: len === 5, pausedLeft: null };
+    const { len, brk } = pickLen();
+    if (!len) { $("tPhase").textContent = "Bitte 1 bis 480 Minuten eingeben"; $("tMin").focus(); return; }
+    timer = { len, endAt: Date.now() + len * 60000, subject: $("tSubject").value, brk, pausedLeft: null };
   } else if (timer.pausedLeft != null) { timer.endAt = Date.now() + timer.pausedLeft; timer.pausedLeft = null; }
   else { timer.pausedLeft = timerLeft(); }
   store.set("timer", timer); armEnd(); renderTimer();
 };
 $("tStop").onclick = () => finishTimer(false);
-$("tLen").onchange = () => { if (!timer) renderTimer(); };
+$("tLen").onchange = () => {
+  showCustom(); store.set("lastLen", $("tLen").value);
+  if ($("tLen").value === "custom" && !$("tMin").value) $("tMin").focus();
+  if (!timer) renderTimer();
+};
+$("tMin").oninput = () => { store.set("customMin", $("tMin").value); if (!timer) renderTimer(); };
+$("tKind").onchange = () => { store.set("customKind", $("tKind").value); if (!timer) renderTimer(); };
 $("tSubject").onchange = () => store.set("lastSubject", $("tSubject").value);
 
 function weekStart(d) { const x = sod(d), wd = (x.getDay() + 6) % 7; return new Date(x.getTime() - wd * DAY); }
@@ -435,7 +450,16 @@ async function init() {
   const sel = $("tSubject");
   DATA.faecher.forEach(f => { const o = document.createElement("option"); o.textContent = f; sel.append(o); });
   sel.value = store.get("lastSubject", DATA.faecher[0]);
-  if (timer) { sel.value = timer.subject; $("tLen").value = String(timer.len); }
+  $("tLen").value = store.get("lastLen", "25");
+  $("tMin").value = store.get("customMin", "");
+  $("tKind").value = store.get("customKind", "lern");
+  if (timer) {
+    sel.value = timer.subject;
+    const preset = (timer.len === 5) === !!timer.brk && ["25", "45", "60", "5"].includes(String(timer.len));
+    if (preset) $("tLen").value = String(timer.len);
+    else { $("tLen").value = "custom"; $("tMin").value = timer.len; $("tKind").value = timer.brk ? "pause" : "lern"; }
+  }
+  showCustom();
   renderTasks(); tick(); armEnd(); renderTimer();
   loadWeather(); loadCalendar();
   if (typeof initFeatures === "function") initFeatures();

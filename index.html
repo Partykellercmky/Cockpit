@@ -135,6 +135,14 @@
             <option value="45">45 min</option>
             <option value="60">60 min</option>
             <option value="5">Pause 5 min</option>
+            <option value="custom">Eigene Zeit</option>
+          </select>
+        </div>
+        <div class="trow" id="tCustom" hidden>
+          <input type="number" id="tMin" min="1" max="480" step="1" inputmode="numeric" placeholder="Minuten" aria-label="Eigene Dauer in Minuten">
+          <select id="tKind" aria-label="Art">
+            <option value="lern">Lernen</option>
+            <option value="pause">Pause</option>
           </select>
         </div>
         <div class="trow">

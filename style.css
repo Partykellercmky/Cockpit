@@ -117,6 +117,7 @@ input:focus,select:focus{border-color:var(--accent)}
 .ttime.brk{color:var(--ok)}
 .trow{display:flex;gap:8px;margin-top:8px}
 .trow > *{flex:1;min-width:0}
+.trow[hidden]{display:none}
 .trow.end{justify-content:flex-end}
 .trow.end > *{flex:0 0 auto}
 .stats{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:grid;gap:6px}

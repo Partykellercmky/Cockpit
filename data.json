@@ -70,9 +70,11 @@
   },
   "faecher": [
     "LF05",
+    "LF06",
     "LF07/08",
-    "Zwischenprüfung",
     "Englisch",
+    "Deutsch",
+    "Zwischenprüfung",
     "Sonstiges"
   ],
   "notenziel": 2.5,
