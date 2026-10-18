@@ -1,12 +1,12 @@
 "use strict";
 /* Cockpit – Beteiligung im Unterricht.
-   Ziel: in jeder Unterrichtsstunde mindestens 2 Meldungen. Alles bleibt lokal auf dem Mac.
+   Ziel: Einzelstunde 1 Meldung, Doppelstunde 3 Meldungen. Alles bleibt lokal auf dem Mac.
    Bewusst ohne Benachrichtigungen. */
 
-const BT_GOAL = 2; // Meldungen pro Unterrichtsstunde
+const BT_GOALS = { 1: 1, 2: 3 }; // Ziel je Einzelstunde (1) und Doppelstunde (2)
 let beteiligung = store.get("beteiligung", []); // {id, d:"YYYY-MM-DD", fach, h:1|2, n}
 
-const btGoal = e => BT_GOAL * (e.h || 1);
+const btGoal = e => BT_GOALS[e.h || 1] || 1;
 const btHours = arr => arr.reduce((a, e) => a + (e.h || 1), 0);
 const btReached = arr => arr.reduce((a, e) => a + (e.n >= btGoal(e) ? (e.h || 1) : 0), 0);
 function btSave() { store.set("beteiligung", beteiligung); renderBeteiligung(); if (typeof renderToday === "function") renderToday(); }
@@ -68,13 +68,13 @@ function renderBeteiligung() {
   // Gesamt und je Fach
   const allH = btHours(beteiligung), allOk = btReached(beteiligung), allN = beteiligung.reduce((a, e) => a + e.n, 0);
   $("btTotal").textContent = allH ? Math.round(allOk / allH * 100) + " % · Ø " + (allN / allH).toLocaleString("de-DE", { maximumFractionDigits: 1 }) + " pro Stunde" : "--";
-  const by = {}; beteiligung.forEach(e => { const b = by[e.fach] = by[e.fach] || { h: 0, n: 0 }; b.h += e.h || 1; b.n += e.n; });
+  const by = {}; beteiligung.forEach(e => { const b = by[e.fach] = by[e.fach] || { h: 0, n: 0, g: 0 }; b.h += e.h || 1; b.n += e.n; b.g += btGoal(e); });
   const bs = $("btBySub"); bs.textContent = "";
   Object.entries(by).sort((a, b) => a[0].localeCompare(b[0])).forEach(([f, v]) => {
     const avg = v.n / v.h, li = document.createElement("li"); li.innerHTML = "<span></span><b></b>";
     li.querySelector("span").textContent = f + " (" + v.h + " Std.)";
     li.querySelector("b").textContent = "Ø " + avg.toLocaleString("de-DE", { maximumFractionDigits: 1 });
-    li.querySelector("b").className = avg >= BT_GOAL ? "good" : "bad";
+    li.querySelector("b").className = v.n >= v.g ? "good" : "bad";
     bs.append(li);
   });
 }
