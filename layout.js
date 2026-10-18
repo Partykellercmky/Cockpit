@@ -3,7 +3,7 @@
 
 const TABS = {
   heute:  [["termine", "countdowns"], ["aufgaben", "notiz"], ["spotify", "wetter"]],
-  schule: [["countdowns", "ausbildung"], ["lernplan", "noten"], ["spotify", "timer"]],
+  schule: [["countdowns", "ausbildung"], ["beteiligung", "lernplan", "noten"], ["spotify", "timer"]],
   privat: [["sparziele"], ["serien", "mac"], ["spotify", "notiz"]]
 };
 let ALL = null; // urspruengliche Anordnung fuer "Alle"
@@ -55,6 +55,14 @@ function renderToday() {
   // Lernzeit heute
   const m = sessions.filter(s => s.d === ymd(now)).reduce((a, s) => a + s.min, 0);
   bar.append(chip("Gelernt heute", m >= 60 ? Math.floor(m / 60) + " h " + pad(m % 60) + " min" : m + " min", m ? "ok" : "", () => setTab("schule")));
+  // Beteiligung im Unterricht (nur wenn heute Schule ist oder schon Stunden eingetragen sind)
+  if (typeof beteiligung !== "undefined") {
+    const bt = beteiligung.filter(e => e.d === ymd(now));
+    if (bt.length || (now.getDay() === 5 && !holidays(now.getFullYear())[ymd(now)])) {
+      const h = btHours(bt), ok = btReached(bt);
+      bar.append(chip("Beteiligung", h ? ok + " von " + h + " Stunden im Ziel" : "noch keine Stunde", h && ok === h ? "ok" : "", () => setTab("schule")));
+    }
+  }
   // laufender Song
   const cur = window.spCur;
   if (cur && cur.item && cur.is_playing) {

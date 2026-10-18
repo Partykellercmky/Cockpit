@@ -315,3 +315,31 @@ body{background:transparent}
 .goal form{grid-column:1/-1}
 .plan li .bar,.goal .bar{display:none}
 @media (max-width:680px){.tabs{width:100%}.tabs button{flex:1;padding:7px 6px}.clock .ring{width:40px;height:40px}}
+
+/* Beteiligung im Unterricht */
+.btsum{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.btday{font:500 .7rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:0}
+.btbig{font:400 1.5rem/1.2 var(--mono);margin:2px 0}
+.btsum p{margin:0}
+.btlist{list-style:none;margin:0;padding:0}
+.btrow{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name dots" "ctl ctl";gap:6px 10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.btrow:first-child{border-top:0}
+.btname{grid-area:name;min-width:0}
+.btname b{display:block;font-weight:500;overflow-wrap:anywhere}
+.btname span{font-size:.78rem;color:var(--warn)}
+.btrow.done .btname span{color:var(--ok)}
+.btdots{grid-area:dots;display:flex;gap:5px}
+.btdots i{width:11px;height:11px;border-radius:50%;border:1.5px solid var(--faint)}
+.btdots i.on{background:var(--accent);border-color:var(--accent)}
+.btrow.done .btdots i.on{background:var(--ok);border-color:var(--ok)}
+.btdots i.extra{opacity:.6}
+.btctl{grid-area:ctl;display:flex;align-items:center;gap:8px}
+.btctl .btn.small{margin:0;padding:6px 12px;font-size:.85rem}
+.btctl .btn.primary{flex:1}
+.btctl output{font:.85rem var(--mono);color:var(--muted);min-width:3.6em;text-align:center}
+.btctl .x{background:none;border:0;color:var(--faint);cursor:pointer;padding:2px 6px;font-size:1rem}
+.btctl .x:hover,.btctl .x[data-sure]{color:var(--crit);font-size:.8rem}
+.btlen{flex:0 0 auto}
+.week i.full{background:var(--ok)}
+.bysub li b.good{color:var(--ok)}
+.bysub li b.bad{color:var(--warn)}

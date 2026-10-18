@@ -449,7 +449,7 @@ $("goalForm").onsubmit = ev => {
 $("openSettings").onclick = () => { $("calKey").value = store.get("calKey", ""); $("settings").showModal(); };
 $("saveSettings").onclick = () => { store.set("calKey", $("calKey").value.trim()); loadCalendar(); };
 $("exportBtn").onclick = () => {
-  const blob = new Blob([JSON.stringify({ tasks, sessions, goals, grades, planGoals: store.get("planGoals", {}), series: store.get("series", null), note: store.get("note", ""), calKey: store.get("calKey", "") }, null, 2)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify({ tasks, sessions, goals, grades, planGoals: store.get("planGoals", {}), series: store.get("series", null), beteiligung: store.get("beteiligung", []), note: store.get("note", ""), calKey: store.get("calKey", "") }, null, 2)], { type: "application/json" });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "cockpit-sicherung-" + ymd(new Date()) + ".json"; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 };
@@ -466,6 +466,7 @@ $("importFile").onchange = async ev => {
     if (d.planGoals) store.set("planGoals", d.planGoals);
     if (Array.isArray(d.series)) { seriesList = d.series; store.set("series", seriesList); }
     if (typeof d.calKey === "string") store.set("calKey", d.calKey);
+    if (Array.isArray(d.beteiligung)) { store.set("beteiligung", d.beteiligung); if (typeof beteiligung !== "undefined") { beteiligung = d.beteiligung; renderBeteiligung(); } }
     renderTasks(); renderStats(); renderSaving(); loadCalendar();
     $("footInfo").textContent = "Sicherung geladen";
   } catch { $("footInfo").textContent = "Sicherung konnte nicht gelesen werden"; }

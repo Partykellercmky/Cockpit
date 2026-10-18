@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="style.css?v=15">
+<link rel="stylesheet" href="style.css?v=16">
 </head>
 <body>
 <main class="wrap">
@@ -73,6 +73,30 @@
           <button class="btn" type="submit">Eintragen</button>
         </form>
         <datalist id="subjectList"></datalist>
+      </section>
+
+      <section class="card" data-id="beteiligung">
+        <h2>Beteiligung im Unterricht <span class="hint">Ziel 2 pro Stunde</span></h2>
+        <div class="btsum">
+          <span id="btRing"></span>
+          <div><p class="btday" id="btDay">Heute</p><p class="btbig" id="btSum">--</p><p class="sub" id="btMeta"></p></div>
+        </div>
+        <ul class="btlist" id="btList"></ul>
+        <form class="addrow" id="btForm">
+          <input id="btFach" type="text" list="btSubjects" placeholder="Fach der Stunde" autocomplete="off" aria-label="Fach der Stunde">
+          <select id="btLen" aria-label="Länge" class="btlen">
+            <option value="1">Einzelstunde</option>
+            <option value="2">Doppelstunde</option>
+          </select>
+          <button class="btn" type="submit">Stunde starten</button>
+        </form>
+        <datalist id="btSubjects"></datalist>
+        <div class="stats">
+          <div class="statline"><span>Verlauf (Stunden mit Ziel)</span></div>
+          <div class="week" id="btBars"></div>
+          <div class="statline"><span>Gesamt</span><b id="btTotal">--</b></div>
+          <ul class="bysub" id="btBySub"></ul>
+        </div>
       </section>
     </div>
 
@@ -240,7 +264,7 @@
     </label>
     <p class="sub"><a href="spotify.html" target="_blank" rel="noopener" class="inlink">Mit Spotify verbinden</a> öffnet die Anmeldung. Den Code, der danach angezeigt wird, hier einfügen.</p>
     <h3>Sicherung</h3>
-    <p class="sub">Aufgaben, Lernzeiten und Sparstand liegen nur auf diesem Mac. Hier kannst du sie sichern oder wiederherstellen.</p>
+    <p class="sub">Aufgaben, Lernzeiten, Beteiligung und Sparstand liegen nur auf diesem Mac. Hier kannst du sie sichern oder wiederherstellen.</p>
     <div class="trow">
       <button class="btn" id="exportBtn" type="button">Sicherung herunterladen</button>
       <label class="btn filebtn">Sicherung laden<input id="importFile" type="file" accept="application/json" hidden></label>
@@ -252,8 +276,9 @@
   </form>
 </dialog>
 
-<script src="app.js?v=20"></script>
-<script src="features.js?v=20"></script>
-<script src="layout.js?v=15"></script>
+<script src="app.js?v=21"></script>
+<script src="features.js?v=21"></script>
+<script src="beteiligung.js?v=1"></script>
+<script src="layout.js?v=16"></script>
 </body>
 </html>
