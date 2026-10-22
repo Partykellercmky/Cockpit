@@ -38,8 +38,8 @@
     },
     {
       "titel": "Ende Einsatz FiBu",
-      "datum": "2026-12-31T15:00",
-      "info": "Danach Öffentlichkeitsarbeit",
+      "datum": "2026-12-17T15:00",
+      "info": "Letzter Tag · danach Öffentlichkeitsarbeit",
       "tag": "Einsatz"
     },
     {
@@ -61,7 +61,7 @@
   "einsatz": {
     "abteilung": "Finanzbuchhaltung",
     "start": "2026-09-01",
-    "ende": "2026-12-31",
+    "ende": "2026-12-17",
     "danach": "Öffentlichkeitsarbeit",
     "schule": "BBS Hannah-Arendt · Fr 08:00–16:00"
   },

@@ -487,6 +487,26 @@ $("importFile").onchange = async ev => {
 /* ---------- Start ---------- */
 function renderDaily() { renderCountdowns(); renderDept(); renderSaving(); renderStats(); if (typeof renderPlan === "function") renderPlan(); }
 
+/* Selbst-Aktualisierung: prueft regelmaessig, ob es eine neue Version (Code oder data.json) gibt,
+   und laedt dann neu. Aufgaben, Timer usw. liegen im Browser-Speicher und bleiben erhalten. */
+let verStamp = null, verLast = 0;
+async function versionStamp() {
+  const [a, b] = await Promise.all(["sw.js", "data.json"].map(f => fetch(f + "?v=" + Date.now(), { cache: "no-store" }).then(r => r.ok ? r.text() : Promise.reject())));
+  return (a.match(/CACHE = "([^"]+)"/) || [])[1] + "|" + b.length + "|" + b.split("").reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0);
+}
+async function checkUpdate() {
+  if (Date.now() - verLast < 60000) return; verLast = Date.now();
+  try {
+    const s = await versionStamp();
+    if (verStamp === null) { verStamp = s; return; }
+    if (s === verStamp) return;
+    const typing = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+    if (typing) { verLast = 0; return; }
+    if (navigator.serviceWorker) { const reg = await navigator.serviceWorker.getRegistration(); if (reg) await reg.update().catch(() => {}); }
+    location.reload();
+  } catch {}
+}
+
 async function init() {
   try { const r = await fetch("data.json", { cache: "no-cache" }); DATA = await r.json(); }
   catch { $("footInfo").textContent = "data.json konnte nicht geladen werden"; return; }
@@ -511,6 +531,9 @@ async function init() {
   document.addEventListener("visibilitychange", () => { if (!document.hidden) { tick(); renderTimer(); } });
   setInterval(loadWeather, 30 * 60000);
   setInterval(loadCalendar, 10 * 60000);
+  checkUpdate();
+  setInterval(checkUpdate, 15 * 60000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) checkUpdate(); });
   $("footInfo").textContent = "Cockpit · Stand " + fmtD(new Date());
 }
 init();
