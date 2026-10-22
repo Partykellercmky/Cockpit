@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cockpit · Spotify verbinden</title>
+<title>Cock · Spotify verbinden</title>
 <link rel="stylesheet" href="style.css?v=9">
 <style>
 .box{max-width:520px;margin:12vh auto;padding:0 16px;display:grid;gap:14px}
@@ -15,11 +15,11 @@ h1{font:500 .8rem var(--mono);letter-spacing:.14em;text-transform:uppercase;colo
 <main class="box">
   <h1>Spotify verbinden</h1>
   <p id="msg">Einen Moment ...</p>
-  <p><a class="btn" href="./" id="backBtn">Zurück zu Cockpit</a></p>
+  <p><a class="btn" href="./" id="backBtn">Zurück zu Cock</a></p>
   <div id="out" hidden>
     <p class="code" id="code"></p>
     <div class="trow"><button class="btn primary" id="copy" type="button">Code kopieren</button></div>
-    <p class="sub">Diesen Code in Cockpit unter Einstellungen bei „Spotify-Verbindungscode“ einfügen. Er ist nur für dich, nicht weitergeben.</p>
+    <p class="sub">Diesen Code in Cock unter Einstellungen bei „Spotify-Verbindungscode“ einfügen. Er ist nur für dich, nicht weitergeben.</p>
   </div>
 </main>
 <script>
@@ -36,7 +36,7 @@ const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+
 (async () => {
   const data = await fetch("data.json", { cache: "no-cache" }).then(r => r.json());
   const clientId = (data.spotify || {}).clientId;
-  if (!clientId) { msg("Spotify ist in Cockpit noch nicht eingerichtet (Client ID fehlt)."); return; }
+  if (!clientId) { msg("Spotify ist in Cock noch nicht eingerichtet (Client ID fehlt)."); return; }
   const q = new URLSearchParams(location.search);
   if (q.get("error")) { msg("Anmeldung abgebrochen: " + q.get("error")); return; }
   if (!q.get("code")) {
@@ -60,7 +60,7 @@ const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+
   if (!r.ok) { msg("Spotify hat die Anmeldung abgelehnt (" + r.status + "). Bitte noch einmal versuchen."); return; }
   const j = await r.json();
   try { localStorage.setItem("cockpit.spRefresh", JSON.stringify(j.refresh_token)); } catch {}
-  msg("Verbunden. Du kannst jetzt zurück zu Cockpit. Falls Cockpit dort trotzdem „Nicht verbunden“ zeigt, kopiere diesen Code und füge ihn unter Einstellungen ein:");
+  msg("Verbunden. Du kannst jetzt zurück zu Cock. Falls Cock dort trotzdem „Nicht verbunden“ zeigt, kopiere diesen Code und füge ihn unter Einstellungen ein:");
   document.getElementById("code").textContent = j.refresh_token;
   document.getElementById("out").hidden = false;
   document.getElementById("copy").onclick = async () => {

@@ -34,7 +34,7 @@ chmod 700 "$DIR/mac-stats.sh"
 
 cat > "$DIR/uninstall.sh" <<UNINST
 #!/bin/bash
-launchctl unload "$PLIST" 2>/dev/null; rm -f "$PLIST"; rm -rf "$DIR"; echo "Mac-Statistik fuer Cockpit entfernt."
+launchctl unload "$PLIST" 2>/dev/null; rm -f "$PLIST"; rm -rf "$DIR"; echo "Mac-Statistik fuer Cock entfernt."
 UNINST
 
 cat > "$PLIST" <<PL
@@ -49,4 +49,4 @@ cat > "$PLIST" <<PL
 PL
 launchctl unload "$PLIST" 2>/dev/null || true
 launchctl load "$PLIST"
-bash "$DIR/mac-stats.sh" && echo "Fertig. Cockpit zeigt die Mac-Nutzung in wenigen Minuten an."
+bash "$DIR/mac-stats.sh" && echo "Fertig. Cock zeigt die Mac-Nutzung in wenigen Minuten an."

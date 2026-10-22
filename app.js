@@ -320,7 +320,7 @@ function renderTimer() {
   if (!timer) { $("tPhase").textContent = "Bereit"; $("tStart").textContent = "Start"; }
   else if (timer.pausedLeft != null) { $("tPhase").textContent = "Pausiert · " + (brk ? "Pause" : timer.subject); $("tStart").textContent = "Weiter"; }
   else { $("tPhase").textContent = brk ? "Pause" : "Fokus · " + timer.subject; $("tStart").textContent = "Pausieren"; }
-  document.title = timer && timer.pausedLeft == null ? $("tTime").textContent + " · Cockpit" : "Cockpit";
+  document.title = timer && timer.pausedLeft == null ? $("tTime").textContent + " · Cock" : "Cock";
   if (timer && timer.pausedLeft == null && left <= 0) finishTimer(true);
 }
 function finishTimer(completed) {
@@ -534,7 +534,7 @@ async function init() {
   checkUpdate();
   setInterval(checkUpdate, 15 * 60000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) checkUpdate(); });
-  $("footInfo").textContent = "Cockpit · Stand " + fmtD(new Date());
+  $("footInfo").textContent = "Cock · Stand " + fmtD(new Date());
 }
 init();
 
