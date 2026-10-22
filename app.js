@@ -49,11 +49,23 @@ function holidays(y) {
 
 /* ---------- Uhr und Tagesstatus ---------- */
 function dur(ms) { const m = Math.max(0, Math.round(ms / 60000)); return m >= 60 ? Math.floor(m / 60) + " h " + pad(m % 60) + " min" : m + " min"; }
+// Urlaub: feste Zeitraeume aus data.json, zusaetzlich ganztaegige "Urlaub"-Termine aus dem Kalender
+function vacationOn(now) {
+  const t = ymd(now);
+  for (const u of (DATA && DATA.urlaub) || []) {
+    if (t >= u.von && t <= u.bis) return "Urlaub" + (u.titel ? " · " + u.titel : "") + (u.bis > t ? " · bis " + fmtD(new Date(u.bis + "T12:00")) : " · letzter Tag");
+  }
+  const day = sod(now);
+  const ev = (window.calEvents || []).find(e => e.allDay && /urlaub/i.test(e.title) && e.start <= now && e.end > day);
+  return ev ? ev.title.trim() : "";
+}
 function dayStatus(now) {
   const hol = holidays(now.getFullYear())[ymd(now)];
   if (hol) return { text: "Feiertag · " + hol, free: true };
   const wd = now.getDay();
   if (wd === 0 || wd === 6) return { text: "Wochenende", free: true };
+  const vac = vacationOn(now);
+  if (vac) return { text: vac, free: true };
   const school = wd === 5;
   const [s, e] = school ? [8, 16] : [7, 15];
   const start = new Date(now); start.setHours(s, 0, 0, 0);
