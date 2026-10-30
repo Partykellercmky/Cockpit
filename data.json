@@ -37,9 +37,15 @@
       "lernziel": 12
     },
     {
+      "titel": "Lernstart Deutsch",
+      "datum": "2026-11-20T18:00",
+      "info": "3 Wochen vor der Klausur · Thema: Kommunikation",
+      "tag": "Lernstart"
+    },
+    {
       "titel": "Klausur Deutsch",
       "datum": "2026-12-11T12:25",
-      "info": "Spengler · Klausur Nr. 1",
+      "info": "Spengler · Klausur Nr. 1 · Thema: Kommunikation",
       "tag": "Klausur",
       "fach": "Deutsch"
     },
