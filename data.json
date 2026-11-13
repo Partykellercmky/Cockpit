@@ -8,8 +8,8 @@
   "countdowns": [
     {
       "titel": "Englisch-Präsentation",
-      "datum": "2026-11-13T15:15",
-      "info": "Fisahn · verschoben vom 06.11. · My company, my departments, my responsibilities",
+      "datum": "2026-11-20T15:15",
+      "info": "Fisahn · verschoben vom 06.11. und 13.11. · My company, my departments, my responsibilities",
       "tag": "Präsentation",
       "fach": "Englisch",
       "lernziel": 4
@@ -30,11 +30,11 @@
     },
     {
       "titel": "Klausur LF07/08",
-      "datum": "2026-11-13T09:50",
-      "info": "Hoppe · Stoff: alles bisher",
+      "datum": "2026-11-20T09:50",
+      "info": "Hoppe · Stoff: alles bisher · verschoben vom 13.11.",
       "tag": "Klausur",
       "fach": "LF07/08",
-      "lernziel": 12
+      "lernziel": 17
     },
     {
       "titel": "Lernstart Deutsch",
